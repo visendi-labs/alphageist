@@ -11,7 +11,7 @@ index = VectorstoreIndexCreator().from_loaders([loader])
 
 llm = OpenAI(temperature=0.0, model_name="gpt-3.5-turbo")
 
-query = """What did England do during the second world war? Answer in the following format: 
+query = """What did USA do during the second world war? Answer in the following format: 
 [{"action": <short descriprtion>, "date": <the date when the action occured>}, ...]
 
 """
