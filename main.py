@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from langchain.indexes import VectorstoreIndexCreator
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.chat_models import ChatOpenAI
 
 def get_loaders(path):
@@ -16,6 +17,8 @@ def get_loaders(path):
                 loaders.append(TextLoader(file_path))
             elif file.endswith('.pdf'):
                 loaders.append(PyPDFLoader(file_path))
+            elif file.endswith('.csv'):
+                loaders.append(CSVLoader(file_path))    
 
     return loaders
     
@@ -26,8 +29,9 @@ def main():
 
     llm = ChatOpenAI(temperature=0.0, model_name="gpt-3.5-turbo")
 
-    query = "What country did Sweden occupy during the second world war?"
+    # query = "What country did Sweden occupy during the second world war?"
     # query = "What is the protection degree of the Hypercharger 225?"
+    query = "Does the input files conatain any GPS data? If yes, how many GPS points?"
 
     #query = """What did USA do during the second world war? Answer in the following format: 
     #[{"action": <short descriprtion>, "date": <the date when the action occured>}, ...]
