@@ -8,5 +8,7 @@ env/
 # OS specific files
 .DS_Store
 
-# Python files
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.pyc
+*$py.class
