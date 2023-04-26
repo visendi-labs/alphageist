@@ -5,6 +5,7 @@ from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
 from langchain.document_loaders.csv_loader import CSVLoader
+from langchain.document_loaders.image import UnstructuredImageLoader
 from langchain.chat_models import ChatOpenAI
 
 
@@ -24,7 +25,10 @@ def get_loaders(path):
              elif file.endswith('.csv'):
                  loaders.append(CSVLoader(file_path))  
              elif file.endswith('.py'):
-                 loaders.append(PythonLoader(file_path))  
+                 loaders.append(PythonLoader(file_path))
+             elif file.endswith('.jpeg') or file.endswith('.png'):
+                loaders.append(UnstructuredImageLoader(file_path))
+
     return loaders
 
 def query_files(query: str, path: str):
