@@ -3,7 +3,6 @@ from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores.chroma import Chroma
-from alphageist.doc_generator import get_loaders
 
 def query_docs(docs, query) -> dict: 
 

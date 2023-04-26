@@ -1,6 +1,6 @@
 from functools import lru_cache
 from alphageist.query import query_docs
-from alphageist.doc_generator import get_docs_from_drive
+from alphageist.doc_generator import get_docs_from_path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,7 +9,7 @@ TEST_DATA_PATH = "test/data/"
 
 @lru_cache(maxsize=None)
 def _get_test_docs():
-    return get_docs_from_drive(TEST_DATA_PATH)
+    return get_docs_from_path(TEST_DATA_PATH)
 
 def test_query_docs_python():
     query = "What does the fucntion generate_random_prime(start, end) do?"

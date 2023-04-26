@@ -1,5 +1,5 @@
 from alphageist.query import query_docs
-from alphageist.doc_generator import get_docs_from_drive
+from alphageist.doc_generator import get_docs_from_path
 from dotenv import load_dotenv
 
 TEST_DATA_PATH = "test/data"
@@ -9,7 +9,7 @@ def main():
     path = input("Path (test/data/):")
     path = path if path else TEST_DATA_PATH
 
-    docs = get_docs_from_drive(path)        
+    docs = get_docs_from_path(path)        
     
     while query := input("Query: "):
         response = query_docs(docs, query) 
