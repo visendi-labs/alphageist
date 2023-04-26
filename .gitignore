@@ -7,3 +7,6 @@ env/
 
 # OS specific files
 .DS_Store
+
+# Python files
+*.pyc
