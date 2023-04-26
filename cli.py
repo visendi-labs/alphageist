@@ -1,12 +1,18 @@
-from alphageist.dir_query import query_files
+from alphageist.query import query_docs
+from alphageist.doc_generator import get_docs_from_drive
 from dotenv import load_dotenv
+
+TEST_DATA_PATH = "test/data"
 
 def main():
 
-    while True:
-        query = input("Query: ")
+    path = input("Path (test/data/):")
+    path = path if path else TEST_DATA_PATH
 
-        response = query_files(query, "test/data/")
+    docs = get_docs_from_drive(path)        
+    
+    while query := input("Query: "):
+        response = query_docs(docs, query) 
 
         print(f"Question: {response['question']}")
         print(f"Answer: {response['answer']}")

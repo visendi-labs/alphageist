@@ -1,4 +1,4 @@
-from alphageist.dir_query import query_files
+from alphageist.query import query_files
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -20,7 +20,7 @@ def test_query_files_txt():
     res = query_files(query, TEST_DATA_PATH)
     assert res['sources'] == "test/data/ww2/ww2.txt"
 
-def test_query_files_txt():
+def test_query_files_pdf():
     query = "What is the protection degree of the Hypercharger 225?"
     res = query_files(query, TEST_DATA_PATH)
     assert res['sources'] == "test/data/HYC_225_300_produktbrief_v20180513.pdf"

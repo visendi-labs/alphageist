@@ -1,16 +1,11 @@
-import os
-from langchain.indexes import VectorstoreIndexCreator
-from langchain.document_loaders import DirectoryLoader
+import os 
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
-from langchain.chat_models import ChatOpenAI
+from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter
 
-
-def get_loaders2(path):
-    return [DirectoryLoader(path,glob="**/*.csv", loader_cls=CSVLoader)]
 
 def get_loaders(path):
     loaders = []
@@ -31,16 +26,15 @@ def get_loaders(path):
 
     return loaders
 
-def query_files(query: str, path: str):
-    llm = ChatOpenAI(temperature=0.0, model_name="gpt-3.5-turbo")
-    loaders = get_loaders(path)
-    if len(loaders) == 0:
-        raise Exception("error: no loaders found")
+def get_docs_from_drive(path):
+    docs = []
+    for loader in get_loaders(path):
+        docs.extend(loader.load())
 
-    print(f"Number of loaders: {len(loaders)}\n")
-    index = VectorstoreIndexCreator().from_loaders(loaders)
+    print(f"Number of docs: {len(docs)}")
 
-    response = index.query_with_sources(query, llm=llm)
-    response["answer"] = response["answer"].rstrip("\n") # Remove trailing newline character
+    subdocs = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap=0).split_documents(docs)
+    print(f"Number of subdocs: {len(subdocs)}")
 
-    return response
+    return subdocs
+ 
