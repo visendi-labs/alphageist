@@ -1,23 +1,27 @@
 import time
 import sys
 import threading  
-from alphageist.query import query_docs
-from alphageist.doc_generator import get_docs_from_path
+from alphageist.query import query_vectorstore
+from alphageist.vectorstore import get_vectorstore
+from langchain.vectorstores.base import VectorStore
 from dotenv import load_dotenv
 
 TEST_DATA_PATH = "test/data"
 
 class CLI:
-    __docs = []
-    __docs_thread: threading.Thread
+    vectorstore: VectorStore
+    __vs_thread: threading.Thread
     def __init__(self, path):
-        self.__docs_thread = threading.Thread(target=get_docs_from_path, args=(path, self.__docs))
-        self.__docs_thread.start()
+        self.__vs_thread = threading.Thread(target=self._get_vectorstore, args=(path,))
+        self.__vs_thread.start()
+
+    def _get_vectorstore(self, path):
+       self.vectorstore = get_vectorstore(path) 
 
     def run(self):
-        print("Loading docs", end='')
+        print("Loading vectorstore", end='')
         cnt = 1
-        while self.__docs_thread.is_alive():
+        while self.__vs_thread.is_alive():
             sys.stdout.write(".")
             time.sleep(0.2)
             if cnt%4 == 0:
@@ -29,7 +33,7 @@ class CLI:
         print("")
 
         while query := input("Query: "):
-            response = query_docs(self.__docs, query) 
+            response = query_vectorstore(self.vectorstore, query) 
 
             print(f"Question: {response['question']}")
             print(f"Answer: {response['answer']}")

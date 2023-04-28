@@ -1,5 +1,4 @@
 import os 
-import asyncio
 from collections.abc import Iterator
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
@@ -8,25 +7,6 @@ from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
 from langchain.document_loaders.base import BaseLoader
-
-# def get_loaders(path):
-#     loaders = []
-#     for root, dirs, files in os.walk(path):
-#          for file in files:
-#              file_path = os.path.join(root, file)
-# 
-#              if file.endswith('.txt'):
-#                  loaders.append(TextLoader(file_path))
-#              elif file.endswith('.pdf'):
-#                  loaders.append(PyPDFLoader(file_path))
-#              elif file.endswith('.csv'):
-#                  loaders.append(CSVLoader(file_path))  
-#              elif file.endswith('.py'):
-#                  loaders.append(PythonLoader(file_path))
-#              elif file.endswith('.jpeg') or file.endswith('.png'):
-#                 loaders.append(UnstructuredImageLoader(file_path))
-
-#    return loaders
 
 def _get_file_paths(path:str)->Iterator[str]:
     for root, dirs, files in os.walk(path):
@@ -66,7 +46,8 @@ def get_docs_from_file(file_path:str)->list:
     return subdocs
     
  
-def get_docs_from_path(path, docs):
+def get_docs_from_path(path):
+    docs = []
     for file_path in _get_file_paths(path):
         docs.extend(get_docs_from_file(file_path))
     return docs
