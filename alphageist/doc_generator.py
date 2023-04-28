@@ -1,4 +1,5 @@
 import os 
+import asyncio
 from collections.abc import Iterator
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
@@ -54,6 +55,7 @@ _docu_splitter_by_filetype = {
    ".png": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
 }
 
+
 def get_docs_from_file(file_path:str)->list:
     file_ext = _get_file_extension(file_path)
     if not file_ext in _loader_by_filetype:
@@ -63,9 +65,8 @@ def get_docs_from_file(file_path:str)->list:
     subdocs = _docu_splitter_by_filetype[file_ext]().split_documents(docs)
     return subdocs
     
-
-def get_docs_from_path(path):
-    docs = []
+ 
+def get_docs_from_path(path, docs):
     for file_path in _get_file_paths(path):
         docs.extend(get_docs_from_file(file_path))
     return docs
