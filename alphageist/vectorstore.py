@@ -11,4 +11,4 @@ def generate_vectorstore(path:str):
 def get_vectorstore(path: str)->Chroma:
     docs = get_docs_from_path(path)
     embedding = OpenAIEmbeddings()
-    return Chroma.from_documents(docs, embedding=embedding, persist_directory=".")
+    return Chroma.from_documents(docs, embedding=embedding, persist_directory=".alphageist")

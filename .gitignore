@@ -18,4 +18,4 @@ env/
 __pycache__/
 
 # Vectore database
-**/*.parquet
+**/.alphageist/
