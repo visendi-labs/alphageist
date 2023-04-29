@@ -2,7 +2,7 @@ import time
 import sys
 import threading  
 from alphageist.query import query_vectorstore
-from alphageist.vectorstore import get_vectorstore
+from alphageist.vectorstore import get_vectorstore, vectorstore_exists, load_vectorstore
 from langchain.vectorstores.base import VectorStore
 from dotenv import load_dotenv
 
@@ -10,18 +10,22 @@ TEST_DATA_PATH = "test/data"
 
 class CLI:
     vectorstore: VectorStore
-    __vs_thread: threading.Thread
+    _loading_vectorstore: bool = False
     def __init__(self, path):
-        self.__vs_thread = threading.Thread(target=self._get_vectorstore, args=(path,))
-        self.__vs_thread.start()
+        if vectorstore_exists():
+            self.vectorstore = load_vectorstore()
+        else:
+            self._loading_vectorstore = True
+            threading.Thread(target=self._get_vectorstore, args=(path,)).start()
 
     def _get_vectorstore(self, path):
        self.vectorstore = get_vectorstore(path) 
+       self._loading_vectorstore = False
 
     def run(self):
         print("Loading vectorstore", end='')
         cnt = 1
-        while self.__vs_thread.is_alive():
+        while self._loading_vectorstore:
             sys.stdout.write(".")
             time.sleep(0.2)
             if cnt%4 == 0:
