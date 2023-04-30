@@ -2,24 +2,25 @@ import time
 import sys
 import threading  
 from alphageist.query import query_vectorstore
-from alphageist.vectorstore import get_vectorstore, vectorstore_exists, load_vectorstore
+from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from langchain.vectorstores.base import VectorStore
 from dotenv import load_dotenv
 
 TEST_DATA_PATH = "test/data"
+PERSIST_DIRECTORY = ".alphageist"
 
 class CLI:
     vectorstore: VectorStore
     _loading_vectorstore: bool = False
     def __init__(self, path):
-        if vectorstore_exists():
-            self.vectorstore = load_vectorstore()
+        if vectorstore_exists(PERSIST_DIRECTORY):
+            self.vectorstore = load_vectorstore(PERSIST_DIRECTORY)
         else:
             self._loading_vectorstore = True
-            threading.Thread(target=self._get_vectorstore, args=(path,)).start()
+            threading.Thread(target=self._create_vectorstore, args=(path,PERSIST_DIRECTORY)).start()
 
-    def _get_vectorstore(self, path):
-       self.vectorstore = get_vectorstore(path) 
+    def _create_vectorstore(self, path):
+       self.vectorstore = create_vectorstore(path) 
        self._loading_vectorstore = False
 
     def run(self):

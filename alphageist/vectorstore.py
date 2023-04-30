@@ -3,17 +3,17 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores.chroma import Chroma
 from .doc_generator import get_docs_from_path
 
-LOCAL_DB_DIR = ".alphageist"
 
-def vectorstore_exists() -> bool:
-    return os.path.exists(LOCAL_DB_DIR)
+def vectorstore_exists(persist_directory:str) -> bool:
+    return os.path.exists(persist_directory)
 
-def load_vectorstore()->Chroma:
+def load_vectorstore(persist_directory:str)->Chroma:
     embedding = OpenAIEmbeddings()
-    client = Chroma(embedding_function=embedding, persist_directory=LOCAL_DB_DIR)
+    client = Chroma(embedding_function=embedding, persist_directory=persist_directory)
     return client
 
-def get_vectorstore(path: str)->Chroma:
+def create_vectorstore(path: str, persist_directory:str)->Chroma:
     docs = get_docs_from_path(path)
     embedding = OpenAIEmbeddings()
-    return Chroma.from_documents(docs, embedding=embedding, persist_directory=LOCAL_DB_DIR)
+    return Chroma.from_documents(docs, embedding=embedding, persist_directory=persist_directory)
+
