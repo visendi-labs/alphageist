@@ -8,6 +8,8 @@ from langchain.document_loaders.image import UnstructuredImageLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
 from langchain.document_loaders.base import BaseLoader
 
+from alphageist.custom_loaders import PPTXLoader
+
 def _get_file_paths(path:str)->Iterator[str]:
     for root, dirs, files in os.walk(path):
         for file in files:
@@ -25,6 +27,7 @@ _loader_by_filetype:dict[BaseLoader] = {
     ".py": PythonLoader,
     ".jpeg": UnstructuredImageLoader,
     ".png": UnstructuredImageLoader,
+    ".pptx": PPTXLoader,
 }
 _docu_splitter_by_filetype = {
    ".txt": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
@@ -33,6 +36,7 @@ _docu_splitter_by_filetype = {
    ".py": lambda: PythonCodeTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".jpeg": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".png": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+   ".pptx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
 }
 
 
