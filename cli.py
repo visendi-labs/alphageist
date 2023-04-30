@@ -40,7 +40,6 @@ class CLI:
         while query := input("Query: "):
             response = query_vectorstore(self.vectorstore, query) 
 
-            print(f"Question: {response['question']}")
             print(f"Answer: {response['answer']}")
             print(f"Sources: {response['sources']}\n")
    
