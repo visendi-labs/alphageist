@@ -3,6 +3,7 @@ from collections.abc import Iterator
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
+from langchain.document_loaders import Docx2txtLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.document_loaders.image import UnstructuredImageLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
@@ -23,20 +24,22 @@ def _get_file_extension(file_name: str) -> str:
 _loader_by_filetype:dict[BaseLoader] = {
     ".txt": TextLoader,
     ".pdf": PyPDFLoader,
-    ".csv": CSVLoader,
+    ".csv": lambda file_path: CSVLoader(file_path, csv_args={ 'delimiter': ',' }),
     ".py": PythonLoader,
     ".jpeg": UnstructuredImageLoader,
     ".png": UnstructuredImageLoader,
     ".pptx": PPTXLoader,
+    ".docx": Docx2txtLoader,
 }
 _docu_splitter_by_filetype = {
    ".txt": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".pdf": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".csv": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".csv": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".py": lambda: PythonCodeTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".jpeg": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".png": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
    ".pptx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+   ".docx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
 }
 
 
