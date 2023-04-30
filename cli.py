@@ -19,8 +19,8 @@ class CLI:
             self._loading_vectorstore = True
             threading.Thread(target=self._create_vectorstore, args=(path,PERSIST_DIRECTORY)).start()
 
-    def _create_vectorstore(self, path):
-       self.vectorstore = create_vectorstore(path) 
+    def _create_vectorstore(self, path, persist_vectorstore):
+       self.vectorstore = create_vectorstore(path, persist_vectorstore) 
        self._loading_vectorstore = False
 
     def run(self):
