@@ -34,7 +34,7 @@ class SettingsDialog(QDialog):
         self.api_key_input = QLineEdit(self)
         self.api_key_input.setText(self.api_key)
         self.api_key_input.setReadOnly(True)
-        self.api_key_input.textChanged.connect(self.enable_save_button)
+        self.api_key_input.textChanged.connect(self.update_save_button_state)
         self.api_key_input.setMinimumSize(300, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
         self.api_key_input.setStyleSheet(
@@ -69,7 +69,7 @@ class SettingsDialog(QDialog):
         self.search_folders_input = QLineEdit(self)
         self.search_folders_input.setText(self.search_folder)
         self.search_folders_input.setReadOnly(True)
-        self.search_folders_input.textChanged.connect(self.enable_save_button)
+        self.search_folders_input.textChanged.connect(self.update_save_button_state)
         self.search_folders_input.setMinimumSize(300, 0)
         self.search_folders_input.setFixedHeight(30)  # Set the height
         self.search_folders_input.setStyleSheet(
@@ -77,7 +77,7 @@ class SettingsDialog(QDialog):
                 color: gray; 
                 border-radius: 10px;
             """
-            ) 
+        ) 
 
         # Set edit button for search folders field
         self.search_folders_edit = QPushButton('✎', self)
@@ -88,7 +88,7 @@ class SettingsDialog(QDialog):
                 background-color: #629EE4;
                 border-radius: 10px;
             """
-            )
+        )
         self.search_folders_edit.setFixedWidth(40)  # Set the width
         self.search_folders_edit.setFixedHeight(30)  # Set the height
         
@@ -128,8 +128,8 @@ class SettingsDialog(QDialog):
         self.setLayout(layout)
 
     
-    def enable_save_button(self):
-        # Change state on save button when 
+    def update_save_button_state(self):
+        # Only enable the save button if something has been updated
         if (self.api_key_input.text() != self.api_key or self.search_folders_input.text() != self.search_folder):
             self.save_button.setEnabled(True)
         else:
@@ -146,12 +146,10 @@ class SettingsDialog(QDialog):
     def toggle_api_key_edit(self):
         self.api_key_input.setReadOnly(not self.api_key_input.isReadOnly())
         self.api_key_input.setStyleSheet("color: white;") # Change color of text in field
-        #self.save_button.setEnabled(True)
 
     def toggle_search_folders_edit(self):
         self.search_folders_input.setReadOnly(not self.search_folders_input.isReadOnly())
         self.search_folders_input.setStyleSheet("color: white;") # Change color of text in field
-        #self.save_button.setEnabled(True)
 
     def showEvent(self, event):
         self.opened.emit()
@@ -165,18 +163,19 @@ class SpotlightSearch(QWidget):
     vectorstore: VectorStore 
     _loading_vectorstore: bool = False 
 
-    #def __init__(self,docs):
     def __init__(self, path): 
         super().__init__()
         self.mpos = QPoint()
         self.settings_open = False
 
-        # CLI block
+        # Load vectorstore on a separate thread
         if vectorstore_exists(PERSIST_DIRECTORY):
             self.vectorstore = load_vectorstore(PERSIST_DIRECTORY)
         else:
             self._loading_vectorstore = True
-            threading.Thread(target=self._create_vectorstore, args=(path,PERSIST_DIRECTORY)).start()
+            vectorstore_loading_thread = threading.Thread(target=self._create_vectorstore, args=(path,PERSIST_DIRECTORY))
+            vectorstore_loading_thread.daemon = True
+            vectorstore_loading_thread.start()
 
         # Set up the user interface
         self.init_ui()
@@ -184,35 +183,46 @@ class SpotlightSearch(QWidget):
         # Set up the timer for checking focus
         self.check_focus_timer = QTimer(self)
         self.check_focus_timer.timeout.connect(self.check_focus)
-        self.check_focus_timer.start(500)  # Check every 500 milliseconds
+        self.check_focus_timer.start(500)  
 
-        # Add drop shadow effect
-        self.shadow_effect = QGraphicsDropShadowEffect()
-        self.shadow_effect.setBlurRadius(20)
-        self.shadow_effect.setOffset(0, 0)
-        self.setGraphicsEffect(self.shadow_effect)
+        # Set up the timer for checking if vectorstore i loaded
+        self.vectorstore_status_timer = QTimer(self)
+        self.vectorstore_status_timer.timeout.connect(self._check_vectorstore_status)
+        self.vectorstore_status_timer.start(100)  
+
+        self.setFocus()
+
+    def _check_vectorstore_status(self):
+        if self._loading_vectorstore:
+            self.search_bar.setPlaceholderText("Loading vectorstore...")
+            self.search_bar.setEnabled(False)
+        else: 
+            self.search_bar.setPlaceholderText("Search...")
+            self.search_bar.setEnabled(True)
     
     def _create_vectorstore(self, path, persist_vectorstore):
        self.vectorstore = create_vectorstore(path, persist_vectorstore) 
        self._loading_vectorstore = False
 
     def init_ui(self):
-
-        # CLI
-        print("Loading vectorstore", end='')
-        cnt = 1
-        while self._loading_vectorstore:
-            sys.stdout.write(".")
-            time.sleep(0.2)
-            if cnt%4 == 0:
-                sys.stdout.write(4*"\b")
-                sys.stdout.write(4*" ")
-                sys.stdout.write(4*"\b")
-            sys.stdout.flush()
-            cnt = cnt + 1
-        print("")
-
         # Set window properties
+        self.set_window_properties()
+
+        # Set up the user interface
+        layout = QVBoxLayout()
+        layout.addLayout(self.create_search_layout())
+
+        # Create text browser to display search results
+        self.create_search_results()
+        layout.addWidget(self.search_results)
+
+        # Set the layout for the widget
+        self.setLayout(layout)
+
+        # Add drop shadow effect
+        self.add_shadow_effect()
+
+    def set_window_properties(self):
         self.setMinimumSize(600, 100)
         self.setMaximumSize(600, 100)
         self.center()
@@ -221,61 +231,44 @@ class SpotlightSearch(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
+    def create_search_layout(self):
         # Create a horizontal layout for search bar and logo
         search_layout = QHBoxLayout()
-        search_layout.setSpacing(2)  # Set spacing btween logo and search bar
-        
+        search_layout.setSpacing(2)  # Set spacing between logo and search bar
+
         # Create logo label and load logo image
+        self.create_logo_label()
+        search_layout.addWidget(self.logo_label)
+
+        # Create search bar and set properties
+        self.create_search_bar()
+        search_layout.addWidget(self.search_bar)
+
+        return search_layout
+
+    def create_logo_label(self):
         self.logo_label = QLabel(self)
         logo_path = os.path.join("frontend_assets", "logo_45x45.png")
-        logo_pixmap = QPixmap(logo_path) 
+        logo_pixmap = QPixmap(logo_path)
         self.logo_label.setPixmap(logo_pixmap.scaled(45, 45, Qt.AspectRatioMode.KeepAspectRatio))  # Adjust logo size
-        
+
         # Create context menu for logo_label
         self.logo_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.logo_label.customContextMenuRequested.connect(self.show_logo_context_menu)
 
-        self.settings_action = QAction("Settings", self)
-        self.settings_action.triggered.connect(self.show_settings)
-        
-        search_layout.addWidget(self.logo_label)
-
-        # Create search bar and set properties
+    def create_search_bar(self):
         self.search_bar = QLineEdit(self)
         font = QFont()
-        font.setPointSize(20)               # Set size font of search bar text
-        self.search_bar.setFont(font)       
+        font.setPointSize(20)  # Set size font of search bar text
+        self.search_bar.setFont(font)
         self.search_bar.setFixedHeight(40)  # Adjust the height of search bar
-        self.search_bar.setPlaceholderText("Search...") # Set default text in Search bar
-        self.search_bar.returnPressed.connect(self.toggle_search_results)
-        search_layout.addWidget(self.search_bar)
+        self.search_bar.setPlaceholderText("Search...")  # Set default text in Search bar
+        self.search_bar.returnPressed.connect(self.search)
 
-        
-        # Add gear icon for settings (not used atm but saved for potential future use)
-
-        #self.settings_button = QPushButton('⚙', self)
-        #self.settings_button.clicked.connect(self.show_settings)
-        #self.settings_button.setStyleSheet(
-        #    """
-        #        color: white;
-        #        font: bold 35px;
-        #        background-color: #323232;
-        #        border-radius: 5px;
-        #    """
-        #    )
-        #self.settings_button.setFixedWidth(40)  # Set the width
-        #self.settings_button.setFixedHeight(40)  # Set the height
-        #search_layout.addWidget(self.settings_button)
-
-
-        # Set up the main layout (Search bar + results)
-        layout = QVBoxLayout()
-        layout.addLayout(search_layout)
-
-        # Create text browser to display search results
+    def create_search_results(self):
         self.search_results = QTextBrowser(self)
         self.search_results.setOpenExternalLinks(True)
-        self.search_results.setVisible(False) # Hite search result initially
+        self.search_results.setVisible(False)  # Hide search result initially
         self.search_results.setStyleSheet(
             """
             QTextBrowser {
@@ -284,16 +277,22 @@ class SpotlightSearch(QWidget):
             background-color: #323232;
             }
             """
-            )
-        layout.addWidget(self.search_results)
+        )
 
-        # Set the layout for the widget
-        self.setLayout(layout)
-
-        # Set focus on the search bar
-        self.search_bar.setFocus()
+    def add_shadow_effect(self):
+        self.shadow_effect = QGraphicsDropShadowEffect()
+        self.shadow_effect.setBlurRadius(20)
+        self.shadow_effect.setOffset(0, 0)
+        self.setGraphicsEffect(self.shadow_effect)
 
     def center(self):
+        """
+        Centers the main window of the application on the screen.
+        
+        This method calculates the center position of the screen based on the
+        screen geometry and the window geometry. It then moves the window to
+        that position.
+        """
         screen = QApplication.primaryScreen()
         screen_geometry = screen.geometry()
         window_geometry = self.geometry()
@@ -306,29 +305,27 @@ class SpotlightSearch(QWidget):
         if not self.settings_open and not self.hasFocus() and not self.search_bar.hasFocus() and not self.search_results.hasFocus():
             self.close()
 
-    def toggle_search_results(self):
-        if self.search_bar.text():
-
-            # Get search result string
-            response = query_vectorstore(self.vectorstore, self.search_bar.text()) # CLI
-            search_result_text = (f"{response['answer']}")
-            print(response)
-            
-            # List of sources
-            sources = response['sources'].split(',')
-
-            # Append sources to the search result text
-            search_result_text += "<br><br>Sources:" 
-            for source in sources:
-                search_result_text += f"<br><a href='{source.strip()}'>{source.strip()}</a>"
-
-            self.search_results.setHtml(search_result_text)
-            self.search_results.setVisible(True)
+    def search(self):
+        if not self.search_bar.text():
+            self.search_results.setVisible(False)
             self.adjust_window_size()
+            return
 
-        else:
-            self.search_results.setVisible(False)  # Hide search results if search bar is empty
-            self.adjust_window_size()
+        # Get search result string
+        response = query_vectorstore(self.vectorstore, self.search_bar.text())
+        search_result_text = (f"{response['answer']}")
+        
+        # List of sources
+        sources = response['sources'].split(',')
+
+        # Append sources to the search result text
+        search_result_text += "<br><br>Sources:" 
+        for source in sources:
+            search_result_text += f"<br><a href='{source.strip()}'>{source.strip()}</a>"
+
+        self.search_results.setHtml(search_result_text)
+        self.search_results.setVisible(True)
+        self.adjust_window_size()
 
     def show_settings(self):
         self.settings_dialog = SettingsDialog("Yktgs45363twrwfdsgjryrehg6433", "test/data")
@@ -346,7 +343,6 @@ class SpotlightSearch(QWidget):
 
     def settings_closed(self):
         self.settings_open = False
-
 
     def adjust_window_size(self):
         if self.search_results.isVisible():
@@ -370,8 +366,6 @@ def main():
 
     path = input("Path (test/data/):")
     path = path if path else TEST_DATA_PATH
-
-    #docs = get_docs_from_path(path)     
 
     app = QApplication(sys.argv)
     spotlight_search = SpotlightSearch(path)
