@@ -4,11 +4,43 @@ import threading
 from alphageist.query import query_vectorstore
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from langchain.vectorstores.base import VectorStore
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from dotenv import load_dotenv
 
 TEST_DATA_PATH = "test/data"
 PERSIST_DIRECTORY = ".alphageist"
+class CLIStreamHandler(StreamingStdOutCallbackHandler):
+    
+    def __init__(self):
+        super().__init__()
+        self.muted:bool = False
+        self.response: str = ""
 
+    def on_llm_new_token(self, token: str, **kwargs):
+        """Run on new LLM token. Only available when streaming is enabled."""
+        # The prompt is always finished by: SOURCES: <sources>, hence we want to 
+        # stop printing when we get this. SOURCES comes in two different tokens:
+        # [S] + [OURCES]. Since many other words starts with S we have to wait until
+        # we se OURCES before we can act`
+        if token == "OURCES" and self.response[-1] == "S":
+            self.muted = True
+            sys.stdout.write("\b ")
+            sys.stdout.flush()
+
+        if self.muted:
+            return
+
+        self.response = self.response + token
+        sys.stdout.write(token)
+        sys.stdout.flush()
+
+    def on_llm_end(self, response, **kwargs) -> None:
+        """Run when LLM ends running."""
+        print("")
+        self.response = ""
+        self.muted = False
+
+        
 class CLI:
     vectorstore: VectorStore
     _loading_vectorstore: bool = False
@@ -38,9 +70,8 @@ class CLI:
         print("")
 
         while query := input("Query: "):
-            response = query_vectorstore(self.vectorstore, query) 
+            response = query_vectorstore(self.vectorstore, query, callbacks=[CLIStreamHandler()]) 
 
-            print(f"Answer: {response['answer']}")
             print(f"Sources: {response['sources']}\n")
    
 
