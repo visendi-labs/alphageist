@@ -20,6 +20,20 @@ from langchain.schema import LLMResult
 TEST_DATA_PATH = "test/data"
 PERSIST_DIRECTORY = ".alphageist"
 
+_icon_by_filetype = {
+    ".txt": "txt.png",
+    ".pdf": "pdf.png",
+    ".csv": "csv.png",
+    ".py": "python.png",
+    ".pptx": "pptx.png",
+    ".docx": "word.png",
+    "default": "default_file.png"
+}
+
+def _get_image_path_by_filename(filename:str)->str:
+    _, file_extension = os.path.splitext(filename)
+    return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
+
 class SettingsDialog(QDialog):
     # Connected to focus check of Settings window 
     opened = pyqtSignal()
@@ -241,15 +255,29 @@ class SpotlightSearch(QWidget):
             sources = ""
         return sources.split(',')
 
+    
+    
     def on_llm_end(self, response:LLMResult, **kwargs) -> None:
         answer = response.generations[0][0].text
         sources = self._get_sources_from_answer(answer) 
 
         # Append sources to the search result text
-        search_result_text = self.search_results.toPlainText()
-        search_result_text += "<br><br>Sources:" 
+        search_result_text = self.search_results.toHtml()
+
+        search_result_text += "<br><br>Sources:"
+        search_result_text += "<table>"
         for source in sources:
-            search_result_text += f"<br><a href='{source.strip()}'>{source.strip()}</a>"
+            icon_path = "frontend_assets/" + _get_image_path_by_filename(source)
+            search_result_text += f"""<tr>
+<td style='padding-right: 4px;'>
+<img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
+</td>
+<td>
+<a href='{source.strip()}'>{source.strip()}</a>
+</td>
+</tr>"""
+
+        search_result_text += "</table>"
 
         self.update_search_results_signal.emit(search_result_text)
         QMetaObject.invokeMethod(self, "update_search_results_signal", QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, search_result_text))
