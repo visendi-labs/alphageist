@@ -1,15 +1,21 @@
 import sys
 import os
-import time
+import re
 import threading  
-from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal,QMetaObject, pyqtSlot
+from PyQt6 import QtCore
+
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu
 from PyQt6.QtGui import QFont, QPixmap, QAction
 from alphageist.query import query_vectorstore
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
+from alphageist.callbackhandler import CustomStreamHandler
 from langchain.vectorstores.base import VectorStore
 from dotenv import load_dotenv
+
+
+from langchain.schema import LLMResult
 
 TEST_DATA_PATH = "test/data"
 PERSIST_DIRECTORY = ".alphageist"
@@ -158,16 +164,18 @@ class SettingsDialog(QDialog):
         self.closed.emit()
 
 
+
 class SpotlightSearch(QWidget):
 
     vectorstore: VectorStore 
     _loading_vectorstore: bool = False 
+    update_search_results_signal = pyqtSignal(str)
 
     def __init__(self, path): 
         super().__init__()
         self.mpos = QPoint()
         self.settings_open = False
-
+        
         # Load vectorstore on a separate thread
         if vectorstore_exists(PERSIST_DIRECTORY):
             self.vectorstore = load_vectorstore(PERSIST_DIRECTORY)
@@ -190,7 +198,64 @@ class SpotlightSearch(QWidget):
         self.vectorstore_status_timer.timeout.connect(self._check_vectorstore_status)
         self.vectorstore_status_timer.start(100)  
 
-        self.setFocus()
+        self.setFocus() # Sets focus so the program wont shutdown
+
+        # Set up the callback functionality making streaming possible
+        self.init_callback()
+
+    def init_callback(self):
+        self.raw_response = [] 
+        self.callback = CustomStreamHandler(self.on_llm_new_token, self.on_llm_end)
+        self.muted = False
+        
+        self.update_search_results_signal.connect(self.update_search_results)
+
+    @pyqtSlot(str)
+    def update_search_results(self, text: str):
+        self.search_results.setHtml(text)
+        self.search_results.setVisible(True)
+        self.adjust_window_size()
+    
+    def on_llm_new_token(self, token:str, **kwargs):
+        if self.muted:
+            return 
+
+        if token == "OURCES" and self.raw_response[-1] == "S": 
+            self.muted = True
+            self.raw_response.pop()
+            self.update_search_results_signal.emit(''.join(self.raw_response))
+            
+        else: 
+            self.raw_response.append(token)
+
+        self.update_search_results_signal.emit(''.join(self.raw_response))
+        QMetaObject.invokeMethod(self, "update_search_results_signal", QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, ''.join(self.raw_response)))
+
+        self.search_results.setVisible(True)
+        self.adjust_window_size()
+
+    def _get_sources_from_answer(self, answer:str) -> list[str]:
+        if re.search(r"SOURCES:\s", answer):
+            _, sources = re.split(r"SOURCES:\s", answer)
+        else:
+            sources = ""
+        return sources.split(',')
+
+    def on_llm_end(self, response:LLMResult, **kwargs) -> None:
+        answer = response.generations[0][0].text
+        sources = self._get_sources_from_answer(answer) 
+
+        # Append sources to the search result text
+        search_result_text = self.search_results.toPlainText()
+        search_result_text += "<br><br>Sources:" 
+        for source in sources:
+            search_result_text += f"<br><a href='{source.strip()}'>{source.strip()}</a>"
+
+        self.update_search_results_signal.emit(search_result_text)
+        QMetaObject.invokeMethod(self, "update_search_results_signal", QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, search_result_text))
+
+        self.muted = False
+        self.raw_response = []
 
     def _check_vectorstore_status(self):
         if self._loading_vectorstore:
@@ -311,21 +376,11 @@ class SpotlightSearch(QWidget):
             self.adjust_window_size()
             return
 
-        # Get search result string
-        response = query_vectorstore(self.vectorstore, self.search_bar.text())
-        search_result_text = (f"{response['answer']}")
-        
-        # List of sources
-        sources = response['sources'].split(',')
-
-        # Append sources to the search result text
-        search_result_text += "<br><br>Sources:" 
-        for source in sources:
-            search_result_text += f"<br><a href='{source.strip()}'>{source.strip()}</a>"
-
-        self.search_results.setHtml(search_result_text)
-        self.search_results.setVisible(True)
-        self.adjust_window_size()
+        query_thread = threading.Thread(target=query_vectorstore, 
+                                        args=(self.vectorstore, self.search_bar.text()), 
+                                        kwargs={"callbacks":[self.callback]})
+        query_thread.daemon = True
+        query_thread.start()
 
     def show_settings(self):
         self.settings_dialog = SettingsDialog("Yktgs45363twrwfdsgjryrehg6433", "test/data")
@@ -363,7 +418,6 @@ class SpotlightSearch(QWidget):
         self.mpos = event.globalPosition().toPoint()
 
 def main():
-
     path = input("Path (test/data/):")
     path = path if path else TEST_DATA_PATH
 
