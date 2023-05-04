@@ -342,7 +342,7 @@ class SpotlightSearch(QWidget):
 
     def create_logo_label(self):
         self.logo_label = QLabel(self)
-        logo_path = os.path.join("frontend_assets", "logo_45x45.png")
+        logo_path = os.path.join("frontend_assets", "logo2_45x45.png")
         logo_pixmap = QPixmap(logo_path)
         self.logo_label.setPixmap(logo_pixmap.scaled(45, 45, Qt.AspectRatioMode.KeepAspectRatio))  # Adjust logo size
 
@@ -355,7 +355,7 @@ class SpotlightSearch(QWidget):
         font = QFont()
         font.setPointSize(20)  # Set size font of search bar text
         self.search_bar.setFont(font)
-        self.search_bar.setFixedHeight(40)  # Adjust the height of search bar
+        self.search_bar.setFixedHeight(42)  # Adjust the height of search bar
         self.search_bar.setPlaceholderText("Search...")  # Set default text in Search bar
         self.search_bar.returnPressed.connect(self.search)
 
