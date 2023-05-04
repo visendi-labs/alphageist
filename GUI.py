@@ -25,6 +25,7 @@ _icon_by_filetype = {
     ".pdf": "pdf.png",
     ".csv": "csv.png",
     ".py": "python.png",
+    ".go": "golang.png",
     ".pptx": "pptx.png",
     ".docx": "word.png",
     "default": "default_file.png"

@@ -14,6 +14,8 @@ def load_vectorstore(persist_directory:str)->Chroma:
 
 def create_vectorstore(path: str, persist_directory:str)->Chroma:
     docs = get_docs_from_path(path)
+    if not docs:
+        raise ValueError(f"No supported files found in {path}")
     embedding = OpenAIEmbeddings()
     return Chroma.from_documents(docs, embedding=embedding, persist_directory=persist_directory)
 
