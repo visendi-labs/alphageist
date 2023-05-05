@@ -234,7 +234,6 @@ class SpotlightSearch(QWidget):
     def on_llm_new_token(self, token:str, **kwargs):
         if self.muted:
             return 
-
         if token == "OURCES" and self.raw_response[-1] == "S": 
             self.muted = True
             self.raw_response.pop()
@@ -243,8 +242,9 @@ class SpotlightSearch(QWidget):
         else: 
             self.raw_response.append(token)
 
-        self.update_search_results_signal.emit(''.join(self.raw_response))
-        QMetaObject.invokeMethod(self, "update_search_results_signal", QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, ''.join(self.raw_response)))
+        response:str = ''.join(self.raw_response).replace('\n', '<br>')
+        self.update_search_results_signal.emit(response)
+        QMetaObject.invokeMethod(self, "update_search_results_signal", QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, response))
 
         self.search_results.setVisible(True)
         self.adjust_window_size()
@@ -265,7 +265,7 @@ class SpotlightSearch(QWidget):
         # Append sources to the search result text
         search_result_text = self.search_results.toHtml()
 
-        search_result_text += "<br><br>Sources:"
+        search_result_text += "Sources:"
         search_result_text += "<table>"
         for source in sources:
             icon_path = "frontend_assets/" + _get_image_path_by_filename(source)
