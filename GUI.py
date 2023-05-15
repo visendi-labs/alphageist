@@ -349,6 +349,8 @@ class SpotlightSearch(QWidget):
         # Create context menu for logo_label
         self.logo_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.logo_label.customContextMenuRequested.connect(self.show_logo_context_menu)
+        self.settings_action = QAction("Settings", self)
+        self.settings_action.triggered.connect(self.show_settings)
 
     def create_search_bar(self):
         self.search_bar = QLineEdit(self)
