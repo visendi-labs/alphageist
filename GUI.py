@@ -2,12 +2,11 @@ import sys
 import os
 import re
 import threading  
-from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal,QMetaObject, pyqtSlot
+from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal,QMetaObject, pyqtSlot, QSize
 from PyQt6 import QtCore
-
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
-from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu
-from PyQt6.QtGui import QFont, QPixmap, QAction
+from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
+from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 from alphageist.query import query_vectorstore
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from alphageist.callbackhandler import CustomStreamHandler
@@ -36,27 +35,40 @@ def _get_image_path_by_filename(filename:str)->str:
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
 class SettingsDialog(QDialog):
+    
     # Connected to focus check of Settings window 
     opened = pyqtSignal()
     closed = pyqtSignal()
 
     def __init__(self, api_key, search_folder):
+        
         super().__init__()
         self.setWindowTitle("Settings")
-        self.setWindowModality(Qt.WindowModality.NonModal)  # Set the dialog to be non-modal
+        self.setModal(True)  # Set the dialog to be application modal
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)  # Add the "stay on top" window flag
         self.api_key = api_key
         self.search_folder = search_folder
         self.init_ui()
 
     def init_ui(self):
-        layout = QVBoxLayout()
+        
+        self.init_api_key_settings()    # Set "API key" field
+        self.init_search_folder()       # Set "Add search folder" container
+        self.init_delete_button()       # Set "Delete" button
+        self.init_edit_button()         # Set "Edit" button
+        self.init_add_folder_button()   # Set "Add folder" button 
+        self.init_save_button()         # Set "Save" button
+        self.set_saved_folder_path()    # Set previously saved folder (if it exists)
+        self.init_layout()              # Set main layout
 
+    def init_api_key_settings(self):
+        
         # Set API key input field 
         self.api_key_input = QLineEdit(self)
         self.api_key_input.setText(self.api_key)
         self.api_key_input.setReadOnly(True)
         self.api_key_input.textChanged.connect(self.update_save_button_state)
-        self.api_key_input.setMinimumSize(300, 0)
+        self.api_key_input.setMinimumSize(450, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
         self.api_key_input.setStyleSheet(
             """
@@ -75,52 +87,104 @@ class SettingsDialog(QDialog):
                 border-radius: 10px;
             """
             )
-        self.api_key_edit.setFixedWidth(40)  # Set the width
-        self.api_key_edit.setFixedHeight(30)  # Set the height
-    
-        
+        self.api_key_edit.setFixedWidth(40) 
+        self.api_key_edit.setFixedHeight(30)  
+
         # Set horisontal layout for API key row
-        api_key_layout = QHBoxLayout()
-        api_key_layout.addWidget(QLabel("API Key"))
-        api_key_layout.addWidget(self.api_key_input)
-        api_key_layout.addWidget(self.api_key_edit)
-        layout.addLayout(api_key_layout)
+        self.api_key_layout = QHBoxLayout()
+        self.api_key_layout.addWidget(QLabel("API Key"))
+        self.api_key_layout.addWidget(self.api_key_input)
+        self.api_key_layout.addWidget(self.api_key_edit)
 
-        # Set search folders input field 
-        self.search_folders_input = QLineEdit(self)
-        self.search_folders_input.setText(self.search_folder)
-        self.search_folders_input.setReadOnly(True)
-        self.search_folders_input.textChanged.connect(self.update_save_button_state)
-        self.search_folders_input.setMinimumSize(300, 0)
-        self.search_folders_input.setFixedHeight(30)  # Set the height
-        self.search_folders_input.setStyleSheet(
+    def init_search_folder(self):
+        
+        # Set folder display container
+        self.folder_container = QWidget(self)
+        self.folder_container.setStyleSheet(
             """
-                color: gray; 
-                border-radius: 10px;
+            background-color: #252525; 
+            border-radius: 10px;
             """
-        ) 
+        )
+        self.folder_container.setFixedWidth(500)
+        self.folder_container.setFixedHeight(40)
 
-        # Set edit button for search folders field
-        self.search_folders_edit = QPushButton('✎', self)
-        self.search_folders_edit.clicked.connect(self.toggle_search_folders_edit)
-        self.search_folders_edit.setStyleSheet(
+        # Add drop shadow effect to folder container
+        shadow_effect = QGraphicsDropShadowEffect(self.folder_container)
+        shadow_effect.setBlurRadius(15)
+        shadow_effect.setOffset(2)
+        shadow_effect.setColor(Qt.GlobalColor.black)  # Set shadow color
+        self.folder_container.setGraphicsEffect(shadow_effect)
+
+        # Initially hide the folder display container
+        self.folder_container.hide()
+
+        # Set layout for folder display container
+        folder_layout = QHBoxLayout(self.folder_container)
+        folder_layout.setContentsMargins(10, 0, 0, 0)  # Margins left, top, right, bottom
+        folder_layout.setSpacing(10)  # Spacing between elements in layout
+
+        # Set folder icon
+        folder_icon = QLabel(self.folder_container)
+        folder_icon_path = os.path.join("frontend_assets", "folder_icon_1200x1200.png")
+        folder_icon.setPixmap(QPixmap(folder_icon_path).scaled(25, 25, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        folder_icon.setFixedSize(25, 25)
+        folder_layout.addWidget(folder_icon)
+
+        # Set folder path text field
+        self.folder_path = QLineEdit(self.folder_container)
+        self.folder_path.setStyleSheet("color: white;")
+        self.folder_path.setReadOnly(True)
+        self.folder_path.textChanged.connect(self.update_save_button_state)
+        folder_layout.addWidget(self.folder_path)
+
+    def init_delete_button(self):
+
+        self.delete_folder_button = QPushButton(self)
+        delete_folder_icon_path = os.path.join("frontend_assets", "trash_can_1200x1200.png")
+        self.delete_folder_button.setIcon(QIcon(QPixmap(delete_folder_icon_path))) 
+        self.delete_folder_button.setIconSize(QSize(25, 25))
+        self.delete_folder_button.setStyleSheet(
+            """
+            background-color: #E06060; 
+            border-radius: 10px;
+            """
+        )
+        self.delete_folder_button.setFixedWidth(35)  
+        self.delete_folder_button.setFixedHeight(35)  
+        self.delete_folder_button.clicked.connect(self.remove_folder)
+        self.delete_folder_button.hide() # Initially hide the button
+
+    def init_edit_button(self):
+
+        self.edit_folder_button = QPushButton('✎', self)
+        self.edit_folder_button.setStyleSheet(
             """
                 color: white; 
                 background-color: #629EE4;
                 border-radius: 10px;
             """
-        )
-        self.search_folders_edit.setFixedWidth(40)  # Set the width
-        self.search_folders_edit.setFixedHeight(30)  # Set the height
-        
-        # Set horisontal layout for Search folders field
-        search_folders_layout = QHBoxLayout()
-        search_folders_layout.addWidget(QLabel("Search Folders"))
-        search_folders_layout.addWidget(self.search_folders_input)
-        search_folders_layout.addWidget(self.search_folders_edit)
-        layout.addLayout(search_folders_layout)
+            )
+        self.edit_folder_button.setFixedWidth(35)  
+        self.edit_folder_button.setFixedHeight(35)  
+        self.edit_folder_button.clicked.connect(self.add_folder)
+        self.edit_folder_button.hide() # Initially hide the button
 
-        # Set Save button 
+    def init_add_folder_button(self):
+
+        self.add_folder_button = QPushButton('+ Add', self)
+        self.add_folder_button.clicked.connect(self.add_folder)
+        self.add_folder_button.setStyleSheet(
+            """
+            background-color: #629EE4; 
+            border-radius: 10px;
+            """
+        )
+        self.add_folder_button.setFixedWidth(70)
+        self.add_folder_button.setFixedHeight(30)
+
+    def init_save_button(self):
+
         self.save_button = QPushButton('Save', self)
         self.save_button.setEnabled(False)
         self.save_button.clicked.connect(self.save_and_close)
@@ -144,21 +208,51 @@ class SettingsDialog(QDialog):
         """
         )
 
-        layout.addWidget(self.save_button)
+    def init_layout(self):
 
-        self.setLayout(layout)
+        # Set the vertical layout inside the settings window
+        self.layout = QVBoxLayout()
 
-    
+        # Add API key layout to main layout
+        self.layout.addLayout(self.api_key_layout)
+
+        # Create empty space after the API key row
+        spacer = QSpacerItem(20, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.MinimumExpanding)
+        self.layout.addItem(spacer)
+
+        # Add "Choose Folders" label
+        self.layout.addWidget(QLabel("Choose Folders"))
+
+        # Set horisontal layout for "Search Folder container" with edit & delete button
+        self.folder_display_layout = QHBoxLayout()
+        self.folder_display_layout.addWidget(self.folder_container) # Add search folder container 
+        self.folder_display_layout.addWidget(self.edit_folder_button) # Add edit button
+        self.folder_display_layout.addWidget(self.delete_folder_button) # Add delete button
+        
+        # Add "Search folder container" to main layout
+        self.layout.addLayout(self.folder_display_layout)
+
+        # Add "Add button" to main layout 
+        self.layout.addWidget(self.add_folder_button)
+
+        # Add empty space after the "Add folder" row
+        self.layout.addItem(spacer)
+
+        # Add "Save button" to main layout
+        self.layout.addWidget(self.save_button)
+
+        self.setLayout(self.layout)
+
     def update_save_button_state(self):
+
         # Only enable the save button if something has been updated
-        if (self.api_key_input.text() != self.api_key or self.search_folders_input.text() != self.search_folder):
+        if (self.api_key_input.text() != self.api_key or self.folder_path.text() != self.search_folder):
             self.save_button.setEnabled(True)
         else:
             self.save_button.setEnabled(False)
     
     def save_and_close(self):
         # Here you would typically save the settings
-        # ...
 
         # Emit the 'closed' signal and close the window
         self.closed.emit()
@@ -168,9 +262,39 @@ class SettingsDialog(QDialog):
         self.api_key_input.setReadOnly(not self.api_key_input.isReadOnly())
         self.api_key_input.setStyleSheet("color: white;") # Change color of text in field
 
-    def toggle_search_folders_edit(self):
-        self.search_folders_input.setReadOnly(not self.search_folders_input.isReadOnly())
-        self.search_folders_input.setStyleSheet("color: white;") # Change color of text in field
+    def set_saved_folder_path(self):
+
+        if len(self.search_folder) > 0:
+            self.folder_path.setText(self.search_folder)
+            self.folder_container.show()
+            self.delete_folder_button.show()
+            self.edit_folder_button.show()
+            self.add_folder_button.hide()
+        else:
+            self.folder_container.hide()
+    
+    
+    def add_folder(self):
+        
+        self.added_folder_path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+
+        if self.added_folder_path:
+            self.folder_path.setText(self.added_folder_path)
+            self.folder_container.show()
+            self.delete_folder_button.show()
+            self.edit_folder_button.show()
+            self.add_folder_button.hide()
+            self.update_save_button_state()
+        else:
+            self.folder_container.hide()
+
+    def remove_folder(self):
+        self.folder_path.clear()
+        self.folder_container.hide()
+        self.delete_folder_button.hide()
+        self.edit_folder_button.hide()
+        self.add_folder_button.show()
+        self.update_save_button_state()
 
     def showEvent(self, event):
         self.opened.emit()
@@ -190,6 +314,7 @@ class SpotlightSearch(QWidget):
         super().__init__()
         self.mpos = QPoint()
         self.settings_open = False
+        self.search_folder_path = path
         
         # Load vectorstore on a separate thread
         if vectorstore_exists(PERSIST_DIRECTORY):
@@ -256,8 +381,6 @@ class SpotlightSearch(QWidget):
             sources = ""
         return sources.split(',')
 
-    
-    
     def on_llm_end(self, response:LLMResult, **kwargs) -> None:
         answer = response.generations[0][0].text
         sources = self._get_sources_from_answer(answer) 
@@ -344,7 +467,7 @@ class SpotlightSearch(QWidget):
         self.logo_label = QLabel(self)
         logo_path = os.path.join("frontend_assets", "logo2_45x45.png")
         logo_pixmap = QPixmap(logo_path)
-        self.logo_label.setPixmap(logo_pixmap.scaled(45, 45, Qt.AspectRatioMode.KeepAspectRatio))  # Adjust logo size
+        self.logo_label.setPixmap(logo_pixmap.scaled(45, 45, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))  # Adjust logo size
 
         # Create context menu for logo_label
         self.logo_label.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -414,10 +537,13 @@ class SpotlightSearch(QWidget):
         query_thread.start()
 
     def show_settings(self):
-        self.settings_dialog = SettingsDialog("Yktgs45363twrwfdsgjryrehg6433", "test/data")
-        self.settings_dialog.opened.connect(self.settings_opened)
-        self.settings_dialog.closed.connect(self.settings_closed)
-        self.settings_dialog.show()
+        if hasattr(self, 'settings_dialog'): # If the settings dialog already exists, show it and don't create a new
+            self.settings_dialog.show()
+        else:
+            self.settings_dialog = SettingsDialog("Yktgs45363twrwfdsgjryrehg6433", self.search_folder_path)
+            self.settings_dialog.opened.connect(self.settings_opened)
+            self.settings_dialog.closed.connect(self.settings_closed)
+            self.settings_dialog.show()
     
     def show_logo_context_menu(self, position):
         context_menu = QMenu(self)
@@ -449,11 +575,11 @@ class SpotlightSearch(QWidget):
         self.mpos = event.globalPosition().toPoint()
 
 def main():
-    path = input("Path (test/data/):")
-    path = path if path else TEST_DATA_PATH
+    # path = input("Path (test/data/):")
+    # path = path if path else TEST_DATA_PATH
 
     app = QApplication(sys.argv)
-    spotlight_search = SpotlightSearch(path)
+    spotlight_search = SpotlightSearch(TEST_DATA_PATH)
     spotlight_search.show()
     sys.exit(app.exec())
 
