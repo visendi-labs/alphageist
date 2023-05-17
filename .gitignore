@@ -19,3 +19,6 @@ __pycache__/
 
 # Vectore database
 **/.alphageist/
+
+# WSL2 Files
+*:Zone.Identifier
