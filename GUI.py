@@ -12,8 +12,6 @@ from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_
 from alphageist.callbackhandler import CustomStreamHandler
 from langchain.vectorstores.base import VectorStore
 from dotenv import load_dotenv
-
-
 from langchain.schema import LLMResult
 
 TEST_DATA_PATH = "test/data"
@@ -58,10 +56,11 @@ class SettingsDialog(QDialog):
         self.init_edit_button()         # Set "Edit" button
         self.init_add_folder_button()   # Set "Add folder" button 
         self.init_save_button()         # Set "Save" button
-        self.set_saved_folder_path()    # Set previously saved folder (if it exists)
+        self.init_saved_folder_path()    # Set previously saved folder (if it exists)
         self.init_layout()              # Set main layout
 
     def init_api_key_settings(self):
+        # Set the API key input row
         
         # Set API key input field 
         self.api_key_input = QLineEdit(self)
@@ -97,7 +96,8 @@ class SettingsDialog(QDialog):
         self.api_key_layout.addWidget(self.api_key_edit)
 
     def init_search_folder(self):
-        
+        # Set the Search folder container which holds a folder icon and path to chosen search folder 
+
         # Set folder display container
         self.folder_container = QWidget(self)
         self.folder_container.setStyleSheet(
@@ -139,7 +139,7 @@ class SettingsDialog(QDialog):
         folder_layout.addWidget(self.folder_path)
 
     def init_delete_button(self):
-
+        # Set the search folder delete button 
         self.delete_folder_button = QPushButton(self)
         delete_folder_icon_path = os.path.join("frontend_assets", "trash_can_1200x1200.png")
         self.delete_folder_button.setIcon(QIcon(QPixmap(delete_folder_icon_path))) 
@@ -156,7 +156,7 @@ class SettingsDialog(QDialog):
         self.delete_folder_button.hide() # Initially hide the button
 
     def init_edit_button(self):
-
+        # Set the edit search folder button
         self.edit_folder_button = QPushButton('✎', self)
         self.edit_folder_button.setStyleSheet(
             """
@@ -171,7 +171,7 @@ class SettingsDialog(QDialog):
         self.edit_folder_button.hide() # Initially hide the button
 
     def init_add_folder_button(self):
-
+        # Set the add folder button
         self.add_folder_button = QPushButton('+ Add', self)
         self.add_folder_button.clicked.connect(self.add_folder)
         self.add_folder_button.setStyleSheet(
@@ -184,7 +184,7 @@ class SettingsDialog(QDialog):
         self.add_folder_button.setFixedHeight(30)
 
     def init_save_button(self):
-
+        # Set save button design and intial state 
         self.save_button = QPushButton('Save', self)
         self.save_button.setEnabled(False)
         self.save_button.clicked.connect(self.save_and_close)
@@ -241,30 +241,31 @@ class SettingsDialog(QDialog):
         # Add "Save button" to main layout
         self.layout.addWidget(self.save_button)
 
+        # Set main layout
         self.setLayout(self.layout)
 
     def update_save_button_state(self):
-
-        # Only enable the save button if something has been updated
+        # Update state on the "Save button" if user has made any changes in the Settings window 
         if (self.api_key_input.text() != self.api_key or self.folder_path.text() != self.search_folder):
             self.save_button.setEnabled(True)
         else:
             self.save_button.setEnabled(False)
     
     def save_and_close(self):
-        # Here you would typically save the settings
+        # Add changes made in the settings window 
 
         # Emit the 'closed' signal and close the window
         self.closed.emit()
         self.close()
 
     def toggle_api_key_edit(self):
+        # When user want to edit the API key field
         self.api_key_input.setReadOnly(not self.api_key_input.isReadOnly())
         self.api_key_input.setStyleSheet("color: white;") # Change color of text in field
 
-    def set_saved_folder_path(self):
-
-        if len(self.search_folder) > 0:
+    def init_saved_folder_path(self):
+        # Check if any search folders has been previously saved 
+        if self.search_folder:
             self.folder_path.setText(self.search_folder)
             self.folder_container.show()
             self.delete_folder_button.show()
@@ -273,11 +274,9 @@ class SettingsDialog(QDialog):
         else:
             self.folder_container.hide()
     
-    
     def add_folder(self):
-        
+        # Lets user choose a search folder via a file dialog window, after pressing on the "+Add" button
         self.added_folder_path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
-
         if self.added_folder_path:
             self.folder_path.setText(self.added_folder_path)
             self.folder_container.show()
@@ -289,6 +288,7 @@ class SettingsDialog(QDialog):
             self.folder_container.hide()
 
     def remove_folder(self):
+        # Removes chosen search folder, after user has pressed on the trash can button (aka "delete button")
         self.folder_path.clear()
         self.folder_container.hide()
         self.delete_folder_button.hide()
