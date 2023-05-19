@@ -1,4 +1,5 @@
 import time
+import os
 import sys
 import threading  
 from alphageist.query import query_vectorstore
@@ -7,7 +8,7 @@ from langchain.vectorstores.base import VectorStore
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from dotenv import load_dotenv
 
-TEST_DATA_PATH = "test/data"
+TEST_DATA_PATH = os.path.join("test", "data")
 PERSIST_DIRECTORY = ".alphageist"
 class CLIStreamHandler(StreamingStdOutCallbackHandler):
     

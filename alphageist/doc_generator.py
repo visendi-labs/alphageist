@@ -21,7 +21,7 @@ def _get_file_extension(file_name: str) -> str:
     return file_extension
 
 _loader_by_filetype:dict[BaseLoader] = {
-    ".txt": TextLoader,
+    ".txt": lambda file_path: TextLoader(file_path, encoding='utf-8'),
     ".pdf": PyPDFLoader,
     ".csv": lambda file_path: CSVLoader(file_path, csv_args={ 'delimiter': ',' }),
     ".py": PythonLoader,
@@ -44,7 +44,7 @@ def get_docs_from_file(file_path:str)->list:
     file_ext = _get_file_extension(file_path)
     if not file_ext in _loader_by_filetype:
         return [] # Unsupported file
-
+    print(f"Loading {file_path}")
     docs = _loader_by_filetype[file_ext](file_path).load()
     subdocs = _docu_splitter_by_filetype[file_ext]().split_documents(docs)
     return subdocs
