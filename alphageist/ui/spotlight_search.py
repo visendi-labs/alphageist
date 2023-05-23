@@ -1,6 +1,7 @@
 import os
 import re
 import threading
+import logging
 
 from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
 from PyQt6 import QtCore
@@ -29,7 +30,6 @@ _icon_by_filetype = {
     "default": "default_file.png"
 }
 
-
 def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
@@ -39,7 +39,11 @@ class SpotlightSearch(QWidget):
 
     vectorstore: VectorStore
     _loading_vectorstore: bool = False
+
+    # Signals
     update_search_results_signal = pyqtSignal(str)
+    setSearchResultVisible_signal = pyqtSignal(bool)
+    adjustWindowSize_signal = pyqtSignal()
 
     def __init__(self, path):
         super().__init__()
@@ -67,8 +71,13 @@ class SpotlightSearch(QWidget):
             self._check_vectorstore_status)
         self.vectorstore_status_timer.start(100)
         self.setFocus()  # Sets focus so the program wont shutdown
+
         # Set up the callback functionality making streaming possible
         self.init_callback()
+
+        # Signals for toggling search result
+        self.setSearchResultVisible_signal.connect(self.setSearchResultsVisible)
+        self.adjustWindowSize_signal.connect(self.adjust_window_size)
 
     def init_callback(self):
         self.raw_response = []
@@ -76,6 +85,10 @@ class SpotlightSearch(QWidget):
             self.on_llm_new_token, self.on_llm_end)
         self.muted = False
         self.update_search_results_signal.connect(self.update_search_results)
+
+    @pyqtSlot(bool)
+    def setSearchResultsVisible(self, visible: bool):
+        self.search_results.setVisible(visible)
 
     @pyqtSlot(str)
     def update_search_results(self, text: str):
@@ -96,8 +109,10 @@ class SpotlightSearch(QWidget):
         self.update_search_results_signal.emit(response)
         QMetaObject.invokeMethod(self, "update_search_results_signal",
                                  QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, response))
-        self.search_results.setVisible(True)
-        self.adjust_window_size()
+        
+        self.setSearchResultVisible_signal.emit(True)
+        self.adjustWindowSize_signal.emit() 
+        
 
     def _get_sources_from_answer(self, answer: str) -> list[str]:
         if re.search(r"SOURCES:\s", answer):
@@ -246,11 +261,13 @@ class SpotlightSearch(QWidget):
             self.search_results.setVisible(False)
             self.adjust_window_size()
             return
+        query_string = self.search_bar.text()
         query_thread = threading.Thread(target=query_vectorstore,
                                         args=(self.vectorstore,
-                                              self.search_bar.text()),
+                                              query_string),
                                         kwargs={"callbacks": [self.callback]})
         query_thread.daemon = True
+        logging.debug(f"starting search for: {query_string}") 
         query_thread.start()
 
     def show_settings(self):
@@ -275,6 +292,7 @@ class SpotlightSearch(QWidget):
     def settings_closed(self):
         self.settings_open = False
 
+    @pyqtSlot()
     def adjust_window_size(self):
         if self.search_results.isVisible():
             self.setMinimumSize(600, 400)
