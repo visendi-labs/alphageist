@@ -1,5 +1,6 @@
 from alphageist.ui import gui
 from dotenv import load_dotenv
+import logging
 
 
 class ForbiddenImportError(Exception):
@@ -7,6 +8,9 @@ class ForbiddenImportError(Exception):
 
 
 def main():
+    logging.basicConfig(level=logging.WARN,
+                    format='%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+
     load_dotenv()
     gui.run()
 
