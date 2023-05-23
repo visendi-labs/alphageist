@@ -1,5 +1,6 @@
 import os 
 from collections.abc import Iterator
+from langchain.docstore.document import Document
 from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
@@ -40,7 +41,7 @@ _docu_splitter_by_filetype = {
 }
 
 
-def get_docs_from_file(file_path:str)->list:
+def get_docs_from_file(file_path:str)->list[Document]:
     file_ext = _get_file_extension(file_path)
     if not file_ext in _loader_by_filetype:
         return [] # Unsupported file
@@ -50,7 +51,7 @@ def get_docs_from_file(file_path:str)->list:
     return subdocs
     
  
-def get_docs_from_path(path):
+def get_docs_from_path(path)->list[Document]:
     docs = []
     for file_path in _get_file_paths(path):
         docs.extend(get_docs_from_file(file_path))
