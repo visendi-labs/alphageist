@@ -4,9 +4,12 @@ from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, 
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon, QMouseEvent
 
 from .constant import ASSETS_DIRECTORY
+from .constant import COLOR
+from .constant import DESIGN
+
 
 class SettingsDialog(QDialog):
     # Connected to focus check of Settings window
@@ -18,51 +21,91 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Settings")
         self.setModal(True)  # Set the dialog to be application modal
         # Add the "stay on top" window flag
-        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint |
+                            Qt.WindowType.FramelessWindowHint)
+
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
         self.api_key = api_key
         self.search_folder = search_folder
+
         self.init_ui()
 
     def init_ui(self):
+        
+        self.init_title_bar()           # Set the title bar
         self.init_api_key_settings()    # Set "API key" field
         self.init_search_folder()       # Set "Add search folder" container
         self.init_delete_button()       # Set "Delete" button
         self.init_edit_button()         # Set "Edit" button
         self.init_add_folder_button()   # Set "Add folder" button
         self.init_save_button()         # Set "Save" button
-        self.init_saved_folder_path()    # Set previously saved folder (if it exists)
+        self.init_saved_folder_path()   # Set previously saved folder (if it exists)
         self.init_layout()              # Set main layout
+        self.init_background()          # Set the background
+        self.init_outer_layout()        # Set outer layout
+
+        # Set main layout
+        self.setLayout(self.outer_layout)
+
+    def init_title_bar(self):
+        self.title_bar = QWidget()
+        self.title_bar.setStyleSheet(
+            f"""
+            background-color: {COLOR.OBSIDIAN_SHADOW};
+            border-top-right-radius: {DESIGN.ELEMENT_RADIUS};
+            border-top-left-radius: {DESIGN.ELEMENT_RADIUS};
+            """)
+
+        self.title_label = QLabel('Settings')
+        self.title_label.setStyleSheet(
+            f"""
+            color: {COLOR.WHITE};
+            font-weight: bold;
+            """)
+
+        self.title_bar_layout = QHBoxLayout()
+
+        spacer_left = QSpacerItem(
+            20, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        spacer_right = QSpacerItem(
+            20, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.title_bar_layout.addItem(spacer_left)   # Add spacer to the left
+        self.title_bar_layout.addWidget(self.title_label)  # Add your label
+        self.title_bar_layout.addItem(spacer_right)  # Add spacer to the right
+
+        self.title_bar.setLayout(self.title_bar_layout)
 
     def init_api_key_settings(self):
         # Set the API key input row
         # Set API key input field
         self.api_key_input = QLineEdit(self)
         self.api_key_input.setText(self.api_key)
-        self.api_key_input.setReadOnly(True)
+        # self.api_key_input.setReadOnly(True)
+        self.set_api_key_edit_read_only(True)
         self.api_key_input.textChanged.connect(self.update_save_button_state)
         self.api_key_input.setMinimumSize(450, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
-        self.api_key_input.setStyleSheet(
-            """
-                color: gray;
-                border-radius: 10px;
-            """
-        )
+        self.api_key_input.style
+
         # Set edit button for API key field
         self.api_key_edit = QPushButton('✎', self)
         self.api_key_edit.clicked.connect(self.toggle_api_key_edit)
         self.api_key_edit.setStyleSheet(
-            """
-                color: white; 
-                background-color: #629EE4;
-                border-radius: 10px;
+            f"""
+                color: {COLOR.WHITE}; 
+                background-color: {COLOR.COSMIC_SAPPHIRE};
+                border-radius: {DESIGN.BUTTON_RADIUS};
             """
         )
         self.api_key_edit.setFixedWidth(40)
         self.api_key_edit.setFixedHeight(30)
         # Set horisontal layout for API key row
         self.api_key_layout = QHBoxLayout()
-        self.api_key_layout.addWidget(QLabel("API Key"))
+        api_key_label = QLabel("API Key")
+        api_key_label.setStyleSheet(f"color: {COLOR.WHITE};")
+        self.api_key_layout.addWidget(api_key_label)
         self.api_key_layout.addWidget(self.api_key_input)
         self.api_key_layout.addWidget(self.api_key_edit)
 
@@ -71,9 +114,9 @@ class SettingsDialog(QDialog):
         # Set folder display container
         self.folder_container = QWidget(self)
         self.folder_container.setStyleSheet(
-            """
-            background-color: #252525; 
-            border-radius: 10px;
+            f"""
+            background-color: {COLOR.OBSIDIAN_SHADOW}; 
+            border-radius: {DESIGN.BUTTON_RADIUS};
             """
         )
         self.folder_container.setFixedWidth(500)
@@ -101,7 +144,7 @@ class SettingsDialog(QDialog):
         folder_layout.addWidget(folder_icon)
         # Set folder path text field
         self.folder_path = QLineEdit(self.folder_container)
-        self.folder_path.setStyleSheet("color: white;")
+        self.folder_path.setStyleSheet(f"color: {COLOR.WHITE};")
         self.folder_path.setReadOnly(True)
         self.folder_path.textChanged.connect(self.update_save_button_state)
         folder_layout.addWidget(self.folder_path)
@@ -115,9 +158,9 @@ class SettingsDialog(QDialog):
             QIcon(QPixmap(delete_folder_icon_path)))
         self.delete_folder_button.setIconSize(QSize(25, 25))
         self.delete_folder_button.setStyleSheet(
-            """
-            background-color: #E06060; 
-            border-radius: 10px;
+            f"""
+            background-color: {COLOR.SUNSET_RED}; 
+            border-radius: {DESIGN.BUTTON_RADIUS};
             """
         )
         self.delete_folder_button.setFixedWidth(35)
@@ -129,10 +172,10 @@ class SettingsDialog(QDialog):
         # Set the edit search folder button
         self.edit_folder_button = QPushButton('✎', self)
         self.edit_folder_button.setStyleSheet(
-            """
-                color: white; 
-                background-color: #629EE4;
-                border-radius: 10px;
+            f"""
+                color: {COLOR.WHITE}; 
+                background-color: {COLOR.COSMIC_SAPPHIRE};
+                border-radius: {DESIGN.BUTTON_RADIUS};
             """
         )
         self.edit_folder_button.setFixedWidth(35)
@@ -145,9 +188,9 @@ class SettingsDialog(QDialog):
         self.add_folder_button = QPushButton('+ Add', self)
         self.add_folder_button.clicked.connect(self.add_folder)
         self.add_folder_button.setStyleSheet(
-            """
-            background-color: #629EE4; 
-            border-radius: 10px;
+            f"""
+            background-color: {COLOR.COSMIC_SAPPHIRE}; 
+            border-radius: {DESIGN.BUTTON_RADIUS};
             """
         )
         self.add_folder_button.setFixedWidth(70)
@@ -162,32 +205,36 @@ class SettingsDialog(QDialog):
         self.save_button.setFixedHeight(30)
         self.save_button.setFixedWidth(150)
         self.save_button.setStyleSheet(
-            """
-            QPushButton {
-                border-radius: 10px; 
-                color: #9E9E9E;
-            }
-            QPushButton:enabled {
-                background-color: #629EE4;
-                color: white;
-            }
-            QPushButton:!enabled {
-                background-color: #565656;
-            }
+            f"""
+            QPushButton {{
+                border-radius: {DESIGN.BUTTON_RADIUS}; 
+            }}
+            QPushButton:enabled {{
+                background-color: {COLOR.COSMIC_SAPPHIRE};
+                color: {COLOR.WHITE};
+            }}
+            QPushButton:!enabled {{
+                background-color: {COLOR.DOVE_GRAY};
+                color: {COLOR.GRAPHITE_DUST};
+            }}
         """
         )
 
     def init_layout(self):
-        # Set the vertical layout inside the settings window
+        
         self.layout = QVBoxLayout()
+        self.layout.setContentsMargins(10, 10, 10, 10)
         # Add API key layout to main layout
         self.layout.addLayout(self.api_key_layout)
+
         # Create empty space after the API key row
         spacer = QSpacerItem(20, 20, QSizePolicy.Policy.Minimum,
                              QSizePolicy.Policy.MinimumExpanding)
         self.layout.addItem(spacer)
         # Add "Choose Folders" label
-        self.layout.addWidget(QLabel("Choose Folders"))
+        choose_folders_label = QLabel("Choose Folders")
+        choose_folders_label.setStyleSheet(f"color: {COLOR.WHITE};")
+        self.layout.addWidget(choose_folders_label)
         # Set horisontal layout for "Search Folder container" with edit & delete button
         self.folder_display_layout = QHBoxLayout()
         self.folder_display_layout.addWidget(
@@ -204,8 +251,27 @@ class SettingsDialog(QDialog):
         self.layout.addItem(spacer)
         # Add "Save button" to main layout
         self.layout.addWidget(self.save_button)
-        # Set main layout
-        self.setLayout(self.layout)
+
+    def init_background(self):
+        self.background_widget = QWidget()
+        self.background_widget.setStyleSheet(
+            f"""
+            background-color: {COLOR.GRAPHITE_DUST};
+            border-bottom-right-radius: {DESIGN.ELEMENT_RADIUS};
+            border-bottom-left-radius: {DESIGN.ELEMENT_RADIUS};
+            """
+        )
+        self.background_widget.setLayout(self.layout)
+
+    
+    def init_outer_layout(self):
+        # Set the vertical layout inside the settings window
+        # Outer layout contains the titlebar + the layout
+        self.outer_layout = QVBoxLayout()
+        self.outer_layout.setContentsMargins(0, 0, 0, 0)
+        self.outer_layout.setSpacing(0)
+        self.outer_layout.addWidget(self.title_bar)
+        self.outer_layout.addWidget(self.background_widget)
 
     def update_save_button_state(self):
         # Update state on the "Save button" if user has made any changes in the Settings window
@@ -220,11 +286,24 @@ class SettingsDialog(QDialog):
         self.closed.emit()
         self.close()
 
+    def set_api_key_edit_read_only(self, val: bool):
+        if val:  # Read Only
+            self.api_key_input.setReadOnly(True)
+            self.api_key_input.setStyleSheet(f"""
+                color: {COLOR.DOVE_GRAY};
+                background-color: {COLOR.OBSIDIAN_SHADOW};
+                border-radius: {DESIGN.ELEMENT_RADIUS};
+            """)
+        else:  # Write
+            self.api_key_input.setReadOnly(False)
+            self.api_key_input.setStyleSheet(f"""
+                color: {COLOR.WHITE};
+                background-color: {COLOR.OBSIDIAN_SHADOW};
+                border-radius: {DESIGN.ELEMENT_RADIUS};
+            """)
+
     def toggle_api_key_edit(self):
-        # When user want to edit the API key field
-        self.api_key_input.setReadOnly(not self.api_key_input.isReadOnly())
-        # Change color of text in field
-        self.api_key_input.setStyleSheet("color: white;")
+        self.set_api_key_edit_read_only(not self.api_key_input.isReadOnly())
 
     def init_saved_folder_path(self):
         # Check if any search folders has been previously saved
@@ -265,3 +344,13 @@ class SettingsDialog(QDialog):
 
     def closeEvent(self, event):
         self.closed.emit()
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() == Qt.MouseButton.LeftButton:
+            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        if event.buttons() == Qt.MouseButton.LeftButton:
+            self.move(event.globalPosition().toPoint() - self.drag_pos)
+            event.accept()

@@ -17,6 +17,7 @@ from langchain.schema import LLMResult
 
 from .constant import ASSETS_DIRECTORY
 from .constant import PERSIST_DIRECTORY
+from .constant import COLOR
 from .settings_dialog import SettingsDialog
 
 _icon_by_filetype = {
@@ -30,10 +31,30 @@ _icon_by_filetype = {
     "default": "default_file.png"
 }
 
+
 def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
+RES_WIN_PREFIX = """
+<style>
+    body {
+        font-family: Arial, sans-serif;  /* Change this to your preferred font */
+         font-size: 16px;
+    }
+    a {
+        color: white;
+    }
+    a:hover {
+        color: #dddddd;
+    }
+    a:visited {
+        color: #aaaaaa;
+    }
+</style>
+<body> 
+"""
+RES_WIN_POSTFIX = "</body>"
 
 class SpotlightSearch(QWidget):
 
@@ -76,7 +97,8 @@ class SpotlightSearch(QWidget):
         self.init_callback()
 
         # Signals for toggling search result
-        self.setSearchResultVisible_signal.connect(self.setSearchResultsVisible)
+        self.setSearchResultVisible_signal.connect(
+            self.setSearchResultsVisible)
         self.adjustWindowSize_signal.connect(self.adjust_window_size)
 
     def init_callback(self):
@@ -92,7 +114,7 @@ class SpotlightSearch(QWidget):
 
     @pyqtSlot(str)
     def update_search_results(self, text: str):
-        self.search_results.setHtml(text)
+        self.search_results.setHtml(RES_WIN_PREFIX + text + RES_WIN_POSTFIX)
         self.search_results.setVisible(True)
         self.adjust_window_size()
 
@@ -105,14 +127,14 @@ class SpotlightSearch(QWidget):
             self.update_search_results_signal.emit(''.join(self.raw_response))
         else:
             self.raw_response.append(token)
-        response: str = ''.join(self.raw_response).replace('\n', '<br>')
+        response: str = ''.join(self.raw_response).replace('\n', '<br>') 
+
         self.update_search_results_signal.emit(response)
         QMetaObject.invokeMethod(self, "update_search_results_signal",
                                  QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, response))
-        
+
         self.setSearchResultVisible_signal.emit(True)
-        self.adjustWindowSize_signal.emit() 
-        
+        self.adjustWindowSize_signal.emit()
 
     def _get_sources_from_answer(self, answer: str) -> list[str]:
         if re.search(r"SOURCES:\s", answer):
@@ -125,11 +147,13 @@ class SpotlightSearch(QWidget):
         answer = response.generations[0][0].text
         sources = self._get_sources_from_answer(answer)
         # Append sources to the search result text
-        search_result_text = self.search_results.toHtml()
-        search_result_text += "Sources:"
+        search_result_text = ''.join(self.raw_response).replace('\n', '<br>')
+
+        search_result_text += "<br><br>Sources:"
         search_result_text += "<table>"
         for source in sources:
-            icon_path = os.path.join(ASSETS_DIRECTORY, _get_image_path_by_filename(source))
+            icon_path = os.path.join(
+                ASSETS_DIRECTORY, _get_image_path_by_filename(source))
             search_result_text += f"""<tr>
 <td style='padding-right: 4px;'>
 <img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
@@ -209,11 +233,19 @@ class SpotlightSearch(QWidget):
     def create_search_bar(self):
         self.search_bar = QLineEdit(self)
         font = QFont()
-        font.setPointSize(20)  # Set size font of search bar text
+        font.setPointSize(16)  # Set size font of search bar text
         self.search_bar.setFont(font)
         self.search_bar.setFixedHeight(42)  # Adjust the height of search bar
         # Set default text in Search bar
         self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.setStyleSheet(f"""
+            background-color: {COLOR.OBSIDIAN_SHADOW}; 
+            border: 0px solid {COLOR.GRAPHITE_DUST};
+                        color: {COLOR.WHITE};
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        """)
+
         self.search_bar.returnPressed.connect(self.search)
 
     def create_search_results(self):
@@ -221,12 +253,13 @@ class SpotlightSearch(QWidget):
         self.search_results.setOpenExternalLinks(True)
         self.search_results.setVisible(False)  # Hide search result initially
         self.search_results.setStyleSheet(
-            """
-            QTextBrowser {
-            border: 1px solid #686868;
+            f"""
+            QTextBrowser {{
+            background-color: {COLOR.GRAPHITE_DUST};
+            border: 0px solid {COLOR.GRAPHITE_DUST};
             border-radius: 10px;
-            background-color: #323232;
-            }
+            color: {COLOR.WHITE};
+            }}
             """
         )
 
@@ -267,7 +300,7 @@ class SpotlightSearch(QWidget):
                                               query_string),
                                         kwargs={"callbacks": [self.callback]})
         query_thread.daemon = True
-        logging.debug(f"starting search for: {query_string}") 
+        logging.debug(f"starting search for: {query_string}")
         query_thread.start()
 
     def show_settings(self):
