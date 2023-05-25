@@ -91,11 +91,14 @@ class SettingsDialog(QDialog):
         self.api_key_input.style
 
         # Set edit button for API key field
-        self.api_key_edit = QPushButton('✎', self)
+        self.api_key_edit = QPushButton(self)
+        delete_folder_icon_path = os.path.join(
+            ASSETS_DIRECTORY, "pen_icon_1200x1200.png")
+        self.api_key_edit.setIcon(
+            QIcon(QPixmap(delete_folder_icon_path)))
         self.api_key_edit.clicked.connect(self.toggle_api_key_edit)
         self.api_key_edit.setStyleSheet(
             f"""
-                color: {COLOR.WHITE}; 
                 background-color: {COLOR.COSMIC_SAPPHIRE};
                 border-radius: {DESIGN.BUTTON_RADIUS};
             """
@@ -171,10 +174,13 @@ class SettingsDialog(QDialog):
 
     def init_edit_button(self):
         # Set the edit search folder button
-        self.edit_folder_button = QPushButton('✎', self)
+        self.edit_folder_button = QPushButton(self)
+        icon_path = os.path.join(ASSETS_DIRECTORY, "pen_icon_1200x1200.png")
+        self.edit_folder_button.setIcon(
+            QIcon(QPixmap(icon_path))
+        )
         self.edit_folder_button.setStyleSheet(
             f"""
-                color: {COLOR.WHITE}; 
                 background-color: {COLOR.COSMIC_SAPPHIRE};
                 border-radius: {DESIGN.BUTTON_RADIUS};
             """
