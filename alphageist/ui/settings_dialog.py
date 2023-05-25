@@ -99,8 +99,13 @@ class SettingsDialog(QDialog):
         self.api_key_edit.clicked.connect(self.toggle_api_key_edit)
         self.api_key_edit.setStyleSheet(
             f"""
-                background-color: {COLOR.COSMIC_SAPPHIRE};
-                border-radius: {DESIGN.BUTTON_RADIUS};
+            QPushButton{{
+                    background-color: {COLOR.COSMIC_SAPPHIRE};
+                    border-radius: {DESIGN.BUTTON_RADIUS};
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.DREAMY_SKY};
+                }}
             """
         )
         self.api_key_edit.setFixedWidth(40)
@@ -163,8 +168,13 @@ class SettingsDialog(QDialog):
         self.delete_folder_button.setIconSize(QSize(25, 25))
         self.delete_folder_button.setStyleSheet(
             f"""
-            background-color: {COLOR.SUNSET_RED}; 
-            border-radius: {DESIGN.BUTTON_RADIUS};
+            QPushButton{{
+                    background-color: {COLOR.SUNSET_RED};
+                    border-radius: {DESIGN.BUTTON_RADIUS};
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.APRICOT_BREEZE};
+                }}
             """
         )
         self.delete_folder_button.setFixedWidth(35)
@@ -181,8 +191,13 @@ class SettingsDialog(QDialog):
         )
         self.edit_folder_button.setStyleSheet(
             f"""
-                background-color: {COLOR.COSMIC_SAPPHIRE};
-                border-radius: {DESIGN.BUTTON_RADIUS};
+            QPushButton{{
+                    background-color: {COLOR.COSMIC_SAPPHIRE};
+                    border-radius: {DESIGN.BUTTON_RADIUS};
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.DREAMY_SKY};
+                }}
             """
         )
         self.edit_folder_button.setFixedWidth(35)
@@ -196,8 +211,14 @@ class SettingsDialog(QDialog):
         self.add_folder_button.clicked.connect(self.add_folder)
         self.add_folder_button.setStyleSheet(
             f"""
-            background-color: {COLOR.COSMIC_SAPPHIRE}; 
-            border-radius: {DESIGN.BUTTON_RADIUS};
+            QPushButton{{
+                    color: {COLOR.WHITE};
+                    background-color: {COLOR.COSMIC_SAPPHIRE};
+                    border-radius: {DESIGN.BUTTON_RADIUS};
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.DREAMY_SKY};
+                }}
             """
         )
         self.add_folder_button.setFixedWidth(70)
