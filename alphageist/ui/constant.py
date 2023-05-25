@@ -11,7 +11,10 @@ class COLOR:
     WHITE = "#ffffff"
     STEEL_HAZE = "#888888"
     COSMIC_SAPPHIRE = "#556FDA"
+    DREAMY_SKY = "#8FA4FC"
     SUNSET_RED = "#DB504A"
+    APRICOT_BREEZE = "#FA8D88"
+
 
 class DESIGN:
     ELEMENT_RADIUS = "10px"

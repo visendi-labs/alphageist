@@ -214,6 +214,9 @@ class SettingsDialog(QDialog):
                 background-color: {COLOR.COSMIC_SAPPHIRE};
                 color: {COLOR.WHITE};
             }}
+            QPushButton:enabled:hover {{
+                background-color: {COLOR.DREAMY_SKY};
+            }}
             QPushButton:!enabled {{
                 background-color: {COLOR.DOVE_GRAY};
                 color: {COLOR.GRAPHITE_DUST};
