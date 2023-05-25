@@ -40,6 +40,7 @@ class SettingsDialog(QDialog):
         self.init_edit_button()         # Set "Edit" button
         self.init_add_folder_button()   # Set "Add folder" button
         self.init_save_button()         # Set "Save" button
+        self.init_cancel_button()       # Set "Cancel" button
         self.init_saved_folder_path()   # Set previously saved folder (if it exists)
         self.init_layout()              # Set main layout
         self.init_background()          # Set the background
@@ -203,7 +204,7 @@ class SettingsDialog(QDialog):
         self.save_button.clicked.connect(self.save_and_close)
         self.save_button.clicked.connect(self.accept)
         self.save_button.setFixedHeight(30)
-        self.save_button.setFixedWidth(150)
+        self.save_button.setFixedWidth(180)
         self.save_button.setStyleSheet(
             f"""
             QPushButton {{
@@ -219,6 +220,25 @@ class SettingsDialog(QDialog):
             }}
         """
         )
+    def init_cancel_button(self):
+        # Set cancel button design and intial state
+        self.cancel_button = QPushButton('Cancel', self)
+        self.cancel_button.clicked.connect(self.close)
+        self.cancel_button.clicked.connect(self.accept)
+        self.cancel_button.setFixedHeight(30)
+        self.cancel_button.setFixedWidth(100)
+        self.cancel_button.setStyleSheet(
+            f"""
+            QPushButton {{
+                border: 1px solid {COLOR.STEEL_HAZE};
+                border-radius: {DESIGN.BUTTON_RADIUS}; 
+                color: {COLOR.WHITE};
+            }}
+            QPushButton:hover {{
+                background-color: {COLOR.DOVE_GRAY};  
+            }}"""
+            )
+
 
     def init_layout(self):
         
@@ -249,8 +269,13 @@ class SettingsDialog(QDialog):
         self.layout.addWidget(self.add_folder_button)
         # Add empty space after the "Add folder" row
         self.layout.addItem(spacer)
-        # Add "Save button" to main layout
-        self.layout.addWidget(self.save_button)
+
+        # Create a layout for the save & cancel buttons
+        self.button_layout = QHBoxLayout()
+        self.button_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.button_layout.addWidget(self.save_button)
+        self.button_layout.addWidget(self.cancel_button)
+        self.layout.addLayout(self.button_layout)
 
     def init_background(self):
         self.background_widget = QWidget()
@@ -280,10 +305,13 @@ class SettingsDialog(QDialog):
         else:
             self.save_button.setEnabled(False)
 
+    def close(self):
+        self.closed.emit()
+        super().close()
+
     def save_and_close(self):
         # Add changes made in the settings window
         # Emit the 'closed' signal and close the window
-        self.closed.emit()
         self.close()
 
     def set_api_key_edit_read_only(self, val: bool):
