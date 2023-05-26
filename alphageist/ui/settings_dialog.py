@@ -109,8 +109,8 @@ class SettingsDialog(QDialog):
                 }}
             """
         )
-        self.api_key_edit.setFixedWidth(40)
-        self.api_key_edit.setFixedHeight(30)
+        self.api_key_edit.setFixedWidth(DESIGN.BUTTON_ICON_WIDTH)
+        self.api_key_edit.setFixedHeight(DESIGN.BUTTON_ICON_HEIGHT)
         # Set horisontal layout for API key row
         self.api_key_layout = QHBoxLayout()
         api_key_label = QLabel("API Key")
@@ -178,8 +178,8 @@ class SettingsDialog(QDialog):
                 }}
             """
         )
-        self.delete_folder_button.setFixedWidth(35)
-        self.delete_folder_button.setFixedHeight(35)
+        self.delete_folder_button.setFixedWidth(DESIGN.BUTTON_ICON_WIDTH)
+        self.delete_folder_button.setFixedHeight(DESIGN.BUTTON_ICON_WIDTH)
         self.delete_folder_button.clicked.connect(self.remove_folder)
         self.delete_folder_button.hide()  # Initially hide the button
 
@@ -201,8 +201,8 @@ class SettingsDialog(QDialog):
                 }}
             """
         )
-        self.edit_folder_button.setFixedWidth(35)
-        self.edit_folder_button.setFixedHeight(35)
+        self.edit_folder_button.setFixedWidth(DESIGN.BUTTON_ICON_WIDTH)
+        self.edit_folder_button.setFixedHeight(DESIGN.BUTTON_ICON_HEIGHT)
         self.edit_folder_button.clicked.connect(self.add_folder)
         self.edit_folder_button.hide()  # Initially hide the button
 
@@ -222,8 +222,8 @@ class SettingsDialog(QDialog):
                 }}
             """
         )
-        self.add_folder_button.setFixedWidth(70)
-        self.add_folder_button.setFixedHeight(30)
+        self.add_folder_button.setFixedWidth(DESIGN.BUTTON_ADD_FOLDER_WIDTH)
+        self.add_folder_button.setFixedHeight(DESIGN.BUTTON_HEIGHT)
 
     def init_save_button(self):
         # Set save button design and intial state
@@ -231,8 +231,8 @@ class SettingsDialog(QDialog):
         self.save_button.setEnabled(False)
         self.save_button.clicked.connect(self.save_and_close)
         self.save_button.clicked.connect(self.accept)
-        self.save_button.setFixedHeight(30)
-        self.save_button.setFixedWidth(180)
+        self.save_button.setFixedHeight(DESIGN.BUTTON_HEIGHT)
+        self.save_button.setFixedWidth(DESIGN.BUTTON_SAVE_WIDTH)
         self.save_button.setStyleSheet(
             f"""
             QPushButton {{
@@ -256,8 +256,8 @@ class SettingsDialog(QDialog):
         self.cancel_button = QPushButton('Cancel', self)
         self.cancel_button.clicked.connect(self.close)
         self.cancel_button.clicked.connect(self.accept)
-        self.cancel_button.setFixedHeight(30)
-        self.cancel_button.setFixedWidth(100)
+        self.cancel_button.setFixedHeight(DESIGN.BUTTON_HEIGHT)
+        self.cancel_button.setFixedWidth(DESIGN.BUTTON_CANCEL_WIDTH)
         self.cancel_button.setStyleSheet(
             f"""
             QPushButton {{
