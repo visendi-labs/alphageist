@@ -24,7 +24,14 @@ class SettingsDialog(QDialog):
         # Add the "stay on top" window flag
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint |
                             Qt.WindowType.FramelessWindowHint)
-
+        # Set global style sheet for settings dialog
+        self.setStyleSheet(f"""
+            color: {COLOR.WHITE};
+            font-family: {DESIGN.FONT_FAMILY};
+            QPushButton {{
+                font-size: 25px;
+            }}
+        """)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.api_key = api_key
@@ -218,6 +225,7 @@ class SettingsDialog(QDialog):
             f"""
             QPushButton {{
                 border-radius: {DESIGN.BUTTON_RADIUS}; 
+                font-size: {DESIGN.BUTTON_FONT_SIZE};
             }}
             QPushButton:enabled {{
                 background-color: {COLOR.COSMIC_SAPPHIRE};
@@ -242,6 +250,7 @@ class SettingsDialog(QDialog):
         self.cancel_button.setStyleSheet(
             f"""
             QPushButton {{
+                font-size: {DESIGN.BUTTON_FONT_SIZE};
                 border: 1px solid {COLOR.STEEL_HAZE};
                 border-radius: {DESIGN.BUTTON_RADIUS}; 
                 color: {COLOR.WHITE};

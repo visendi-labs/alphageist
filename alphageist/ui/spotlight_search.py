@@ -18,6 +18,7 @@ from langchain.schema import LLMResult
 from .constant import ASSETS_DIRECTORY
 from .constant import PERSIST_DIRECTORY
 from .constant import COLOR
+from .constant import DESIGN
 from .settings_dialog import SettingsDialog
 
 _icon_by_filetype = {
@@ -36,21 +37,20 @@ def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
-RES_WIN_PREFIX = """
+RES_WIN_PREFIX = f"""
 <style>
-    body {
-        font-family: Arial, sans-serif;  /* Change this to your preferred font */
+    body {{
          font-size: 16px;
-    }
-    a {
+    }}
+    a {{
         color: white;
-    }
-    a:hover {
+    }}
+    a:hover {{
         color: #dddddd;
-    }
-    a:visited {
+    }}
+    a:visited {{
         color: #aaaaaa;
-    }
+    }}
 </style>
 <body> 
 """
@@ -184,6 +184,10 @@ class SpotlightSearch(QWidget):
     def init_ui(self):
         # Set window properties
         self.set_window_properties()
+        self.setStyleSheet(f"""
+            color: {COLOR.WHITE};
+            font-family: {DESIGN.FONT_FAMILY};
+        """)
         # Set up the user interface
         layout = QVBoxLayout()
         layout.addLayout(self.create_search_layout())
