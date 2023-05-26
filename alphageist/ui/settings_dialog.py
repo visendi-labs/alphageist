@@ -1,3 +1,4 @@
+
 import os
 
 from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
@@ -273,7 +274,8 @@ class SettingsDialog(QDialog):
     def init_layout(self):
         
         self.layout = QVBoxLayout()
-        self.layout.setContentsMargins(10, 10, 10, 10)
+        margin = 15
+        self.layout.setContentsMargins(margin, margin, margin, margin)
         # Add API key layout to main layout
         self.layout.addLayout(self.api_key_layout)
 
