@@ -84,40 +84,21 @@ class SettingsDialog(QDialog):
         # Set API key input field
         self.api_key_input = QLineEdit(self)
         self.api_key_input.setText(self.api_key)
-        # self.api_key_input.setReadOnly(True)
-        self.set_api_key_edit_read_only(True)
         self.api_key_input.textChanged.connect(self.update_save_button_state)
         self.api_key_input.setMinimumSize(450, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
-        self.api_key_input.style
+        self.api_key_input.setStyleSheet(f"""
+                color: {COLOR.WHITE};
+                background-color: {COLOR.OBSIDIAN_SHADOW};
+                border-radius: {DESIGN.ELEMENT_RADIUS};
+            """)
 
-        # Set edit button for API key field
-        self.api_key_edit = QPushButton(self)
-        delete_folder_icon_path = os.path.join(
-            ASSETS_DIRECTORY, "pen_icon_1200x1200.png")
-        self.api_key_edit.setIcon(
-            QIcon(QPixmap(delete_folder_icon_path)))
-        self.api_key_edit.clicked.connect(self.toggle_api_key_edit)
-        self.api_key_edit.setStyleSheet(
-            f"""
-            QPushButton{{
-                    background-color: {COLOR.COSMIC_SAPPHIRE};
-                    border-radius: {DESIGN.BUTTON_RADIUS};
-                }}
-            QPushButton:hover{{
-                    background-color: {COLOR.DREAMY_SKY};
-                }}
-            """
-        )
-        self.api_key_edit.setFixedWidth(DESIGN.BUTTON_ICON_WIDTH)
-        self.api_key_edit.setFixedHeight(DESIGN.BUTTON_ICON_HEIGHT)
         # Set horisontal layout for API key row
         self.api_key_layout = QHBoxLayout()
         api_key_label = QLabel("API Key")
         api_key_label.setStyleSheet(f"color: {COLOR.WHITE};")
         self.api_key_layout.addWidget(api_key_label)
         self.api_key_layout.addWidget(self.api_key_input)
-        self.api_key_layout.addWidget(self.api_key_edit)
 
     def init_search_folder(self):
         # Set the Search folder container which holds a folder icon and path to chosen search folder
@@ -345,25 +326,6 @@ class SettingsDialog(QDialog):
         # Add changes made in the settings window
         # Emit the 'closed' signal and close the window
         self.close()
-
-    def set_api_key_edit_read_only(self, val: bool):
-        if val:  # Read Only
-            self.api_key_input.setReadOnly(True)
-            self.api_key_input.setStyleSheet(f"""
-                color: {COLOR.DOVE_GRAY};
-                background-color: {COLOR.OBSIDIAN_SHADOW};
-                border-radius: {DESIGN.ELEMENT_RADIUS};
-            """)
-        else:  # Write
-            self.api_key_input.setReadOnly(False)
-            self.api_key_input.setStyleSheet(f"""
-                color: {COLOR.WHITE};
-                background-color: {COLOR.OBSIDIAN_SHADOW};
-                border-radius: {DESIGN.ELEMENT_RADIUS};
-            """)
-
-    def toggle_api_key_edit(self):
-        self.set_api_key_edit_read_only(not self.api_key_input.isReadOnly())
 
     def init_saved_folder_path(self):
         # Check if any search folders has been previously saved
