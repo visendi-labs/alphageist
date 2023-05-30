@@ -1,7 +1,7 @@
 import os
 
-ASSETS_DIRECTORY = os.path.join("alphageist", "ui", "assets")
-PERSIST_DIRECTORY = ".alphageist" 
+ASSETS_DIRECTORY: str = os.path.join("alphageist", "ui", "assets")
+
 
 class COLOR:
     # Visendi Dark Theme

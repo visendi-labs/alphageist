@@ -10,15 +10,20 @@ from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon, QMouseEvent
 from .constant import ASSETS_DIRECTORY
 from .constant import COLOR
 from .constant import DESIGN
+from alphageist import config as cfg
 
 
 class SettingsDialog(QDialog):
     # Connected to focus check of Settings window
     opened = pyqtSignal()
-    closed = pyqtSignal()
+    closed = pyqtSignal(bool)
 
-    def __init__(self, api_key, search_folder):
+    def __init__(self, config: dict):
         super().__init__()
+        self.config = config  # Only updated when saved
+        self.init_ui()
+
+    def init_ui(self):
         self.setWindowTitle("Settings")
         self.setModal(True)  # Set the dialog to be application modal
         # Add the "stay on top" window flag
@@ -34,13 +39,6 @@ class SettingsDialog(QDialog):
         """)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        self.api_key = api_key
-        self.search_folder = search_folder
-
-        self.init_ui()
-
-    def init_ui(self):
-        
         self.init_title_bar()           # Set the title bar
         self.init_api_key_settings()    # Set "API key" field
         self.init_search_folder()       # Set "Add search folder" container
@@ -90,7 +88,7 @@ class SettingsDialog(QDialog):
         # Set the API key input row
         # Set API key input field
         self.api_key_input = QLineEdit(self)
-        self.api_key_input.setText(self.api_key)
+        self.api_key_input.setText(self.config.get(cfg.API_KEY_OPEN_AI, ""))
         self.api_key_input.textChanged.connect(self.update_save_button_state)
         self.api_key_input.setMinimumSize(450, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
@@ -240,6 +238,7 @@ class SettingsDialog(QDialog):
             }}
         """
         )
+
     def init_cancel_button(self):
         # Set cancel button design and intial state
         self.cancel_button = QPushButton('Cancel', self)
@@ -258,11 +257,10 @@ class SettingsDialog(QDialog):
             QPushButton:hover {{
                 background-color: {COLOR.DOVE_GRAY};  
             }}"""
-            )
-
+        )
 
     def init_layout(self):
-        
+
         self.layout = QVBoxLayout()
         margin = 15
         self.layout.setContentsMargins(margin, margin, margin, margin)
@@ -310,7 +308,6 @@ class SettingsDialog(QDialog):
         )
         self.background_widget.setLayout(self.layout)
 
-    
     def init_outer_layout(self):
         # Set the vertical layout inside the settings window
         # Outer layout contains the titlebar + the layout
@@ -320,26 +317,41 @@ class SettingsDialog(QDialog):
         self.outer_layout.addWidget(self.title_bar)
         self.outer_layout.addWidget(self.background_widget)
 
+    @property
+    def settings_has_changed(self)->bool:
+        return (self.api_key_input.text() != self.config[cfg.API_KEY_OPEN_AI] or 
+            self.folder_path.text() != self.config[cfg.SEARCH_DIRS])
+
     def update_save_button_state(self):
+
         # Update state on the "Save button" if user has made any changes in the Settings window
-        if (self.api_key_input.text() != self.api_key or self.folder_path.text() != self.search_folder):
+        if self.settings_has_changed:
             self.save_button.setEnabled(True)
         else:
             self.save_button.setEnabled(False)
 
-    def close(self):
-        self.closed.emit()
+    def close(self, config_changed:bool=False):
+        self.closed.emit(config_changed)
         super().close()
 
     def save_and_close(self):
-        # Add changes made in the settings window
+        
+        # Update the config object
+        self.config[cfg.API_KEY_OPEN_AI] = self.api_key_input.text()
+        self.config[cfg.SEARCH_DIRS] = self.folder_path.text()
+
+        # Save the config to file
+        cfg_file_path = cfg.get_config_file_path()
+        cfg.save_config(cfg_file_path, self.config)
+
+
         # Emit the 'closed' signal and close the window
-        self.close()
+        self.close(config_changed=True)
 
     def init_saved_folder_path(self):
         # Check if any search folders has been previously saved
-        if self.search_folder:
-            self.folder_path.setText(self.search_folder)
+        if self.config.get(cfg.SEARCH_DIRS, ""):
+            self.folder_path.setText(self.config[cfg.SEARCH_DIRS])
             self.folder_container.show()
             self.delete_folder_button.show()
             self.edit_folder_button.show()
@@ -374,7 +386,7 @@ class SettingsDialog(QDialog):
         self.opened.emit()
 
     def closeEvent(self, event):
-        self.closed.emit()
+        self.closed.emit(False)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == Qt.MouseButton.LeftButton:

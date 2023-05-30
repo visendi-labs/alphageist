@@ -1,4 +1,5 @@
 import os 
+from typing import Any
 from collections.abc import Iterator
 from langchain.docstore.document import Document
 from langchain.document_loaders import TextLoader
@@ -21,7 +22,7 @@ def _get_file_extension(file_name: str) -> str:
     file_root, file_extension = os.path.splitext(file_name)
     return file_extension
 
-_loader_by_filetype:dict[BaseLoader] = {
+_loader_by_filetype:dict[str,Any] = {
     ".txt": lambda file_path: TextLoader(file_path, encoding='utf-8'),
     ".pdf": PyPDFLoader,
     ".csv": lambda file_path: CSVLoader(file_path, csv_args={ 'delimiter': ',' }),

@@ -8,10 +8,8 @@ class ForbiddenImportError(Exception):
 
 
 def main():
-    logging.basicConfig(level=logging.WARN,
+    logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
-
-    load_dotenv()
     gui.run()
 
 

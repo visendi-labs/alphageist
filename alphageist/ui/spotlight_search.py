@@ -1,4 +1,5 @@
 import os
+import shutil
 import re
 import threading
 import logging
@@ -9,18 +10,21 @@ from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+import chromadb
 
 from alphageist.query import query_vectorstore
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from alphageist.callbackhandler import CustomStreamHandler
+from alphageist import state
+from alphageist.ui import util
 from langchain.vectorstores.base import VectorStore
 from langchain.schema import LLMResult
 
 from .constant import ASSETS_DIRECTORY
-from .constant import PERSIST_DIRECTORY
 from .constant import COLOR
 from .constant import DESIGN
 from .settings_dialog import SettingsDialog
+import alphageist.config as cfg
 
 _icon_by_filetype = {
     ".txt": "txt.png",
@@ -60,38 +64,38 @@ RES_WIN_POSTFIX = "</body>"
 class SpotlightSearch(QWidget):
 
     vectorstore: VectorStore
-    _loading_vectorstore: bool = False
+    vectorstore_state: state.State
+    query_state: state.State
+    config:dict
 
     # Signals
     update_search_results_signal = pyqtSignal(str)
     setSearchResultVisible_signal = pyqtSignal(bool)
     adjustWindowSize_signal = pyqtSignal()
 
-    def __init__(self, path):
+    def __init__(self, config:dict):
         super().__init__()
+        self.config: dict = config
+
+        self.vectorstore_state = state.NOT_LOADED
+        self.query_state = state.STANDBY
+
         self.mpos = QPoint()
         self.settings_open = False
-        self.search_folder_path = path
-        # Load vectorstore on a separate thread
-        if vectorstore_exists(PERSIST_DIRECTORY):
-            self.vectorstore = load_vectorstore(PERSIST_DIRECTORY)
-        else:
-            self._loading_vectorstore = True
-            vectorstore_loading_thread = threading.Thread(
-                target=self._create_vectorstore, args=(path, PERSIST_DIRECTORY))
-            vectorstore_loading_thread.daemon = True
-            vectorstore_loading_thread.start()
+
         # Set up the user interface
         self.init_ui()
+
         # Set up the timer for checking focus
         self.check_focus_timer = QTimer(self)
         self.check_focus_timer.timeout.connect(self.check_focus)
         self.check_focus_timer.start(500)
-        # Set up the timer for checking if vectorstore i loaded
-        self.vectorstore_status_timer = QTimer(self)
-        self.vectorstore_status_timer.timeout.connect(
-            self._check_vectorstore_status)
-        self.vectorstore_status_timer.start(100)
+
+        # Set up the timer for checking if search-bar should be activated
+        self.searchbar_status_timer = QTimer(self)
+        self.searchbar_status_timer.timeout.connect(
+            self._update_searchbar_status)
+        self.searchbar_status_timer.start(100)
         self.setFocus()  # Sets focus so the program wont shutdown
 
         # Set up the callback functionality making streaming possible
@@ -101,6 +105,17 @@ class SpotlightSearch(QWidget):
         self.setSearchResultVisible_signal.connect(
             self.setSearchResultsVisible)
         self.adjustWindowSize_signal.connect(self.adjust_window_size)
+
+    def init_vectorstore(self):
+        # Load vectorstore on main thread, create on separate
+        if vectorstore_exists(self.config[cfg.VECTORDB_DIR]):
+            self.vectorstore = load_vectorstore(self.config)
+            self.vectorstore_state = state.LOADED
+        else:
+            vectorstore_loading_thread = threading.Thread(
+                target=self._create_vectorstore)
+            vectorstore_loading_thread.daemon = True
+            vectorstore_loading_thread.start()
 
     def init_callback(self):
         self.raw_response = []
@@ -170,17 +185,52 @@ class SpotlightSearch(QWidget):
         self.muted = False
         self.raw_response = []
 
-    def _check_vectorstore_status(self):
-        if self._loading_vectorstore:
+    def _update_searchbar_status(self):
+        if not cfg.has_necessary_components(self.config):
+            self.search_bar.setPlaceholderText("<- Open settings by right clicking on the logo...")
+            self.search_bar.setEnabled(False)
+            self.set_search_bar_error_frame(True)
+            return
+
+        if self.vectorstore_state == state.ERROR:
+            self.search_bar.setPlaceholderText("Error loading vectorstore DB. Check logs for more info.")
+            self.search_bar.setEnabled(False)
+            self.set_search_bar_error_frame(True)
+            return
+
+        if self.vectorstore_state == state.NOT_LOADED:
+            self.init_vectorstore()
+            return
+
+        if self.vectorstore_state == state.LOADING:
             self.search_bar.setPlaceholderText("Loading vectorstore...")
             self.search_bar.setEnabled(False)
-        else:
-            self.search_bar.setPlaceholderText("Search...")
-            self.search_bar.setEnabled(True)
+            return
 
-    def _create_vectorstore(self, path, persist_vectorstore):
-        self.vectorstore = create_vectorstore(path, persist_vectorstore)
-        self._loading_vectorstore = False
+        if self.query_state == state.ERROR:
+            self.set_search_bar_error_frame(True)
+            return
+
+        self.set_search_bar_error_frame(False)
+        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.setEnabled(True)
+
+    def set_search_bar_error_frame(self, val:bool):
+        if val:
+            util.change_stylesheet_property(self.search_bar, "border", f"2px solid {COLOR.SUNSET_RED}")
+        else:
+            util.change_stylesheet_property(self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
+
+    def _create_vectorstore(self):
+        self.vectorstore_state = state.LOADING
+        try:
+            self.vectorstore = create_vectorstore(self.config)
+        except Exception as e:
+            logging.exception(f"Unable to create vectorstore: {str(e)}")
+            self.vectorstore_state = state.ERROR
+        else:
+            logging.info("Vectorstore successfully created")
+            self.vectorstore_state = state.LOADED
 
     def init_ui(self):
         # Set window properties
@@ -297,18 +347,34 @@ class SpotlightSearch(QWidget):
         if not self.settings_open and not self.hasFocus() and not self.search_bar.hasFocus() and not self.search_results.hasFocus():
             self.close()
 
+    def _search(self, query:str):
+        # Runs on separate thread
+        self.query_state = state.QUERYING
+        try:
+            res = query_vectorstore(self.vectorstore, query, self.config, callbacks=[self.callback])
+        except chromadb.errors.NoIndexException as e:
+            # I think this happens if the db is not saved properly
+            logging.exception(f"INDEX BROEKN: {str(e)}")
+            self.vectorstore_state = state.ERROR
+            self.query_state = state.ERROR
+        except Exception as e:
+            logging.exception(f"Error querying: {str(e)}")
+            self.query_state = state.ERROR
+            # TODO: Show error in result window?
+        else:
+            logging.info(f"Search result: {res}")
+            self.query_state = state.STANDBY
+
+
     def search(self):
         if not self.search_bar.text():
             self.search_results.setVisible(False)
             self.adjust_window_size()
             return
         query_string = self.search_bar.text()
-        query_thread = threading.Thread(target=query_vectorstore,
-                                        args=(self.vectorstore,
-                                              query_string),
-                                        kwargs={"callbacks": [self.callback]})
+        query_thread = threading.Thread(target=self._search, args=(query_string,))
         query_thread.daemon = True
-        logging.debug(f"starting search for: {query_string}")
+        logging.info(f"starting search for: {query_string}")
         query_thread.start()
 
     def show_settings(self):
@@ -316,8 +382,7 @@ class SpotlightSearch(QWidget):
         if hasattr(self, 'settings_dialog'):
             self.settings_dialog.show()
         else:
-            self.settings_dialog = SettingsDialog(
-                "Yktgs45363twrwfdsgjryrehg6433", self.search_folder_path)
+            self.settings_dialog = SettingsDialog(self.config)
             self.settings_dialog.opened.connect(self.settings_opened)
             self.settings_dialog.closed.connect(self.settings_closed)
             self.settings_dialog.show()
@@ -344,8 +409,16 @@ class SpotlightSearch(QWidget):
     def settings_opened(self):
         self.settings_open = True
 
-    def settings_closed(self):
+    def settings_closed(self, config_changed:bool):
         self.settings_open = False
+        if config_changed:
+            self.vectorstore_state = state.NOT_LOADED
+            if os.path.exists(self.config[cfg.VECTORDB_DIR]):
+                shutil.rmtree(self.config[cfg.VECTORDB_DIR])
+
+            if self.query_state == state.ERROR:
+                self.query_state = state.STANDBY
+
 
     @pyqtSlot()
     def adjust_window_size(self):
