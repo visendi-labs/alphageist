@@ -2,6 +2,7 @@ import os
 import re
 import threading
 import logging
+import platform
 
 from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
 from PyQt6 import QtCore
@@ -254,7 +255,8 @@ class SpotlightSearch(QWidget):
 
     def create_search_results(self):
         self.search_results = QTextBrowser(self)
-        self.search_results.setOpenExternalLinks(True)
+        self.search_results.setOpenExternalLinks(False) # Prevents ext links opening in search results window 
+        self.search_results.setOpenLinks(False) # Prevents local links opening in search results window 
         self.search_results.setVisible(False)  # Hide search result initially
         self.search_results.setStyleSheet(
             f"""
@@ -266,6 +268,8 @@ class SpotlightSearch(QWidget):
             }}
             """
         )
+        
+        self.search_results.anchorClicked.connect(self.open_file_link)
 
     def add_shadow_effect(self):
         self.shadow_effect = QGraphicsDropShadowEffect()
@@ -322,6 +326,20 @@ class SpotlightSearch(QWidget):
         context_menu = QMenu(self)
         context_menu.addAction(self.settings_action)
         context_menu.exec(self.logo_label.mapToGlobal(position))
+
+    def open_file_link(self, url: str) -> None:
+        filepath = url.path()
+        # For Windows
+        if platform.system() == 'Windows':
+            # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
+            os.startfile(filepath) 
+        # For MacOS
+        elif platform.system() == 'Darwin':
+            # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
+            os.system('open "{}"'.format(filepath))
+        # Unsupported platform
+        else:
+            print("Platform not supported.") # Replace with correct error handling process
 
     def settings_opened(self):
         self.settings_open = True
