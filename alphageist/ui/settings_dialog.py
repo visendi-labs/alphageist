@@ -361,17 +361,16 @@ class SettingsDialog(QDialog):
 
     def add_folder(self):
         # Lets user choose a search folder via a file dialog window, after pressing on the "+Add" button
-        self.added_folder_path = str(
-            QFileDialog.getExistingDirectory(self, "Select Directory"))
-        if self.added_folder_path:
+        folder_path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+
+        if folder_path:
+            self.added_folder_path = folder_path
             self.folder_path.setText(self.added_folder_path)
             self.folder_container.show()
             self.delete_folder_button.show()
             self.edit_folder_button.show()
             self.add_folder_button.hide()
             self.update_save_button_state()
-        else:
-            self.folder_container.hide()
 
     def remove_folder(self):
         # Removes chosen search folder, after user has pressed on the trash can button (aka "delete button")
