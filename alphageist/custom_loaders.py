@@ -22,7 +22,7 @@ class PPTXLoader(BaseLoader):
                     slide_texts.append(shape.text)
             if slide_texts:
                 text = '\n'.join(slide_texts)
-                metadata = {"source": f"{self.file_path} slide {n+1}"} # PPTX slides start counting at 1
+                metadata = {"source": f"{self.file_path}"} 
                 docs.append(Document(page_content=text, metadata=metadata))
         return docs
     
