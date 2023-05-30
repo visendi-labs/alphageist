@@ -164,21 +164,21 @@ class SpotlightSearch(QWidget):
         sources = self._get_sources_from_answer(answer)
         # Append sources to the search result text
         search_result_text = ''.join(self.raw_response).replace('\n', '<br>')
-
-        search_result_text += "<br><br>Sources:"
-        search_result_text += "<table>"
-        for source in sources:
-            icon_path = os.path.join(
-                ASSETS_DIRECTORY, _get_image_path_by_filename(source))
-            search_result_text += f"""<tr>
-<td style='padding-right: 4px;'>
-<img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
-</td>
-<td>
-<a href='{source.strip()}'>{source.strip()}</a>
-</td>
-</tr>"""
-        search_result_text += "</table>"
+        if sources[0] != "" and sources[0] != "N/A":
+            search_result_text += "<br><br>Sources:"
+            search_result_text += "<table>"
+            for source in sources:
+                icon_path = os.path.join(
+                    ASSETS_DIRECTORY, _get_image_path_by_filename(source))
+                search_result_text += f"""<tr>
+                <td style='padding-right: 4px;'>
+                <img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
+                </td>
+                <td>
+                <a href='{source.strip()}'>{source.strip()}</a>
+                </td>
+                </tr>"""
+            search_result_text += "</table>"
         self.update_search_results_signal.emit(search_result_text)
         QMetaObject.invokeMethod(self, "update_search_results_signal",
                                  QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, search_result_text))
