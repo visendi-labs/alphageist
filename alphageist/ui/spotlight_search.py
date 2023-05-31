@@ -42,6 +42,7 @@ def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
+
 RES_WIN_PREFIX = f"""
 <style>
     body {{
@@ -61,19 +62,20 @@ RES_WIN_PREFIX = f"""
 """
 RES_WIN_POSTFIX = "</body>"
 
+
 class SpotlightSearch(QWidget):
 
     vectorstore: VectorStore
     vectorstore_state: state.State
     query_state: state.State
-    config:dict
+    config: dict
 
     # Signals
     update_search_results_signal = pyqtSignal(str)
     setSearchResultVisible_signal = pyqtSignal(bool)
     adjustWindowSize_signal = pyqtSignal()
 
-    def __init__(self, config:dict):
+    def __init__(self, config: dict):
         super().__init__()
         self.config: dict = config
 
@@ -82,6 +84,7 @@ class SpotlightSearch(QWidget):
 
         self.mpos = QPoint()
         self.settings_open = False
+        self.settings_dialog = None
 
         # Set up the user interface
         self.init_ui()
@@ -143,7 +146,7 @@ class SpotlightSearch(QWidget):
             self.update_search_results_signal.emit(''.join(self.raw_response))
         else:
             self.raw_response.append(token)
-        response: str = ''.join(self.raw_response).replace('\n', '<br>') 
+        response: str = ''.join(self.raw_response).replace('\n', '<br>')
 
         self.update_search_results_signal.emit(response)
         QMetaObject.invokeMethod(self, "update_search_results_signal",
@@ -187,13 +190,15 @@ class SpotlightSearch(QWidget):
 
     def _update_searchbar_status(self):
         if not cfg.has_necessary_components(self.config):
-            self.search_bar.setPlaceholderText("<- Open settings by right clicking on the logo...")
+            self.search_bar.setPlaceholderText(
+                "<- Open settings by right clicking on the logo...")
             self.search_bar.setEnabled(False)
             self.set_search_bar_error_frame(True)
             return
 
         if self.vectorstore_state == state.ERROR:
-            self.search_bar.setPlaceholderText("Error loading vectorstore DB. Check logs for more info.")
+            self.search_bar.setPlaceholderText(
+                "Error loading vectorstore DB. Check logs for more info.")
             self.search_bar.setEnabled(False)
             self.set_search_bar_error_frame(True)
             return
@@ -215,11 +220,13 @@ class SpotlightSearch(QWidget):
         self.search_bar.setPlaceholderText("Search...")
         self.search_bar.setEnabled(True)
 
-    def set_search_bar_error_frame(self, val:bool):
+    def set_search_bar_error_frame(self, val: bool):
         if val:
-            util.change_stylesheet_property(self.search_bar, "border", f"2px solid {COLOR.SUNSET_RED}")
+            util.change_stylesheet_property(
+                self.search_bar, "border", f"2px solid {COLOR.SUNSET_RED}")
         else:
-            util.change_stylesheet_property(self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
+            util.change_stylesheet_property(
+                self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
 
     def _create_vectorstore(self):
         self.vectorstore_state = state.LOADING
@@ -305,8 +312,10 @@ class SpotlightSearch(QWidget):
 
     def create_search_results(self):
         self.search_results = QTextBrowser(self)
-        self.search_results.setOpenExternalLinks(False) # Prevents ext links opening in search results window 
-        self.search_results.setOpenLinks(False) # Prevents local links opening in search results window 
+        # Prevents ext links opening in search results window
+        self.search_results.setOpenExternalLinks(False)
+        # Prevents local links opening in search results window
+        self.search_results.setOpenLinks(False)
         self.search_results.setVisible(False)  # Hide search result initially
         self.search_results.setStyleSheet(
             f"""
@@ -318,7 +327,7 @@ class SpotlightSearch(QWidget):
             }}
             """
         )
-        
+
         self.search_results.anchorClicked.connect(self.open_file_link)
 
     def add_shadow_effect(self):
@@ -344,14 +353,19 @@ class SpotlightSearch(QWidget):
 
     def check_focus(self):
         # Shut down if user start focusing on something else
-        if not self.settings_open and not self.hasFocus() and not self.search_bar.hasFocus() and not self.search_results.hasFocus():
+        if (not self.settings_open and 
+            not self.hasFocus() and 
+            not self.search_bar.hasFocus() and 
+            not self.search_results.hasFocus()):
+            print(f"Closing down: self.settings_open = {self.settings_open}")
             self.close()
 
-    def _search(self, query:str):
+    def _search(self, query: str):
         # Runs on separate thread
         self.query_state = state.QUERYING
         try:
-            res = query_vectorstore(self.vectorstore, query, self.config, callbacks=[self.callback])
+            res = query_vectorstore(
+                self.vectorstore, query, self.config, callbacks=[self.callback])
         except chromadb.errors.NoIndexException as e:
             # I think this happens if the db is not saved properly
             logging.exception(f"INDEX BROEKN: {str(e)}")
@@ -365,28 +379,27 @@ class SpotlightSearch(QWidget):
             logging.info(f"Search result: {res}")
             self.query_state = state.STANDBY
 
-
     def search(self):
         if not self.search_bar.text():
             self.search_results.setVisible(False)
             self.adjust_window_size()
             return
         query_string = self.search_bar.text()
-        query_thread = threading.Thread(target=self._search, args=(query_string,))
+        query_thread = threading.Thread(
+            target=self._search, args=(query_string,))
         query_thread.daemon = True
         logging.info(f"starting search for: {query_string}")
         query_thread.start()
 
     def show_settings(self):
         # If the settings dialog already exists, show it and don't create a new
-        if hasattr(self, 'settings_dialog'):
-            self.settings_dialog.show()
-        else:
+        if self.settings_dialog is None:
             self.settings_dialog = SettingsDialog(self.config)
             self.settings_dialog.opened.connect(self.settings_opened)
             self.settings_dialog.closed.connect(self.settings_closed)
-            self.settings_dialog.show()
+        self.settings_dialog.show()
 
+    
     def show_logo_context_menu(self, position):
         context_menu = QMenu(self)
         context_menu.addAction(self.settings_action)
@@ -397,19 +410,20 @@ class SpotlightSearch(QWidget):
         # For Windows
         if platform.system() == 'Windows':
             # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
-            os.startfile(filepath) 
+            os.startfile(filepath)
         # For MacOS
         elif platform.system() == 'Darwin':
             # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
             os.system('open "{}"'.format(filepath))
         # Unsupported platform
         else:
-            print("Platform not supported.") # Replace with correct error handling process
+            # Replace with correct error handling process
+            print("Platform not supported.")
 
     def settings_opened(self):
         self.settings_open = True
 
-    def settings_closed(self, config_changed:bool):
+    def settings_closed(self, config_changed: bool):
         self.settings_open = False
         if config_changed:
             self.vectorstore_state = state.NOT_LOADED
@@ -418,7 +432,6 @@ class SpotlightSearch(QWidget):
 
             if self.query_state == state.ERROR:
                 self.query_state = state.STANDBY
-
 
     @pyqtSlot()
     def adjust_window_size(self):

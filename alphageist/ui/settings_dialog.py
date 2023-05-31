@@ -18,8 +18,9 @@ class SettingsDialog(QDialog):
     opened = pyqtSignal()
     closed = pyqtSignal(bool)
 
-    def __init__(self, config: dict):
-        super().__init__()
+    def __init__(self, config: dict, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.config = config  # Only updated when saved
         self.config = config  # Only updated when saved
         self.init_ui()
 
@@ -47,7 +48,6 @@ class SettingsDialog(QDialog):
         self.init_add_folder_button()   # Set "Add folder" button
         self.init_save_button()         # Set "Save" button
         self.init_cancel_button()       # Set "Cancel" button
-        self.init_saved_folder_path()   # Set previously saved folder (if it exists)
         self.init_layout()              # Set main layout
         self.init_background()          # Set the background
         self.init_outer_layout()        # Set outer layout
@@ -334,6 +334,10 @@ class SettingsDialog(QDialog):
         self.closed.emit(config_changed)
         super().close()
 
+    def reset_to_config(self):
+        self.api_key_input.setText(self.config[cfg.API_KEY_OPEN_AI])
+        self.init_saved_folder_path()
+
     def save_and_close(self):
         
         # Update the config object
@@ -380,6 +384,10 @@ class SettingsDialog(QDialog):
         self.edit_folder_button.hide()
         self.add_folder_button.show()
         self.update_save_button_state()
+
+    def show(self):
+        self.reset_to_config()
+        super().show()
 
     def showEvent(self, event):
         self.opened.emit()

@@ -19,4 +19,5 @@ def run():
 
     spotlight_search = SpotlightSearch(config)
     spotlight_search.show()
-    sys.exit(app.exec())
+    exit_code = app.exec()
+    sys.exit(exit_code)
