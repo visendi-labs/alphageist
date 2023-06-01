@@ -13,6 +13,7 @@ from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 import chromadb
 
 from alphageist.query import query_vectorstore
+from alphageist.query import get_sources_from_answer
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from alphageist.callbackhandler import CustomStreamHandler
 from alphageist import state
@@ -61,6 +62,24 @@ RES_WIN_PREFIX = f"""
 <body> 
 """
 RES_WIN_POSTFIX = "</body>"
+
+
+class ResultWindow(QTextBrowser):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Prevents ext. and local links from opening in search results window
+        self.setOpenExternalLinks(False)
+        self.setOpenLinks(False)
+        self.setStyleSheet(
+            f"""
+            QTextBrowser {{
+            background-color: {COLOR.GRAPHITE_DUST};
+            border: 0px solid {COLOR.GRAPHITE_DUST};
+            border-radius: 10px;
+            color: {COLOR.WHITE};
+            }}
+            """
+        )
 
 
 class SpotlightSearch(QWidget):
@@ -155,16 +174,10 @@ class SpotlightSearch(QWidget):
         self.setSearchResultVisible_signal.emit(True)
         self.adjustWindowSize_signal.emit()
 
-    def _get_sources_from_answer(self, answer: str) -> list[str]:
-        if re.search(r"SOURCES:\s", answer):
-            _, sources = re.split(r"SOURCES:\s", answer)
-        else:
-            sources = ""
-        return sources.split(',')
-
     def on_llm_end(self, response: LLMResult, **kwargs) -> None:
         answer = response.generations[0][0].text
-        sources = self._get_sources_from_answer(answer)
+        sources: list[str] = get_sources_from_answer(answer)
+
         # Append sources to the search result text
         search_result_text = ''.join(self.raw_response).replace('\n', '<br>')
         if sources[0] != "" and sources[0] != "N/A":
@@ -311,23 +324,8 @@ class SpotlightSearch(QWidget):
         self.search_bar.returnPressed.connect(self.search)
 
     def create_search_results(self):
-        self.search_results = QTextBrowser(self)
-        # Prevents ext links opening in search results window
-        self.search_results.setOpenExternalLinks(False)
-        # Prevents local links opening in search results window
-        self.search_results.setOpenLinks(False)
+        self.search_results = ResultWindow()
         self.search_results.setVisible(False)  # Hide search result initially
-        self.search_results.setStyleSheet(
-            f"""
-            QTextBrowser {{
-            background-color: {COLOR.GRAPHITE_DUST};
-            border: 0px solid {COLOR.GRAPHITE_DUST};
-            border-radius: 10px;
-            color: {COLOR.WHITE};
-            }}
-            """
-        )
-
         self.search_results.anchorClicked.connect(self.open_file_link)
 
     def add_shadow_effect(self):
@@ -353,10 +351,10 @@ class SpotlightSearch(QWidget):
 
     def check_focus(self):
         # Shut down if user start focusing on something else
-        if (not self.settings_open and 
-            not self.hasFocus() and 
-            not self.search_bar.hasFocus() and 
-            not self.search_results.hasFocus()):
+        if (not self.settings_open and
+            not self.hasFocus() and
+            not self.search_bar.hasFocus() and
+                not self.search_results.hasFocus()):
             print(f"Closing down: self.settings_open = {self.settings_open}")
             self.close()
 
@@ -399,7 +397,6 @@ class SpotlightSearch(QWidget):
             self.settings_dialog.closed.connect(self.settings_closed)
         self.settings_dialog.show()
 
-    
     def show_logo_context_menu(self, position):
         context_menu = QMenu(self)
         context_menu.addAction(self.settings_action)

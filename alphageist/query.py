@@ -1,3 +1,4 @@
+import re
 import sys
 import logging
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
@@ -9,6 +10,12 @@ from alphageist import config as cfg
 LLM_MODEL_NAME = "gpt-3.5-turbo"
 TEMPERATURE = 0.0
 
+def get_sources_from_answer(answer: str) -> list[str]:
+        if re.search(r"SOURCES:\s", answer):
+            _, sources = re.split(r"SOURCES:\s", answer)
+        else:
+            sources = ""
+        return sources.split(',')
 
 def query_vectorstore(vectorstore: VectorStore, 
                       query: str, 
