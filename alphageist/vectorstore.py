@@ -1,5 +1,6 @@
 import os
 import logging
+from platformdirs import user_config_dir
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.chroma import Chroma
@@ -24,7 +25,7 @@ def get_embeddings(config: dict) -> Embeddings:
 
 
 def app_support_dir(config: dict) -> str:
-    """This function returna the application support 
+    """This function returns the application support 
     directory based on the operating system"""
     if not cfg.VECTORDB_DIR in config.keys():
         raise MissingConfigComponentError(cfg.VECTORDB_DIR)
@@ -32,11 +33,7 @@ def app_support_dir(config: dict) -> str:
     if not vector_db_dir:
         raise ValueError(f"Path for persisting db cannot be empty")
 
-    if os.name == 'nt':  # If the OS is Windows, use the APPDATA environment variable
-        app_data_path = os.getenv('APPDATA')
-        app_support_path = os.path.join(app_data_path, "Visendi Assistant", vector_db_dir)
-    else:  # Assume that it is macOS or Linux, use the user's Library/Application Support directory
-        app_support_path = os.path.expanduser("~/Library/Application Support/Visendi Assistant/" + vector_db_dir)
+    app_support_path = os.path.join(user_config_dir(appname="Visendi Assistant", appauthor=False), vector_db_dir)
 
     os.makedirs(app_support_path, exist_ok=True)
     if not util.path_is_valid_format(app_support_path):
