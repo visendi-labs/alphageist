@@ -11,6 +11,7 @@ from .constant import ASSETS_DIRECTORY
 from .constant import COLOR
 from .constant import DESIGN
 from alphageist import config as cfg
+from alphageist.ui import util
 
 
 class SettingsDialog(QDialog):
@@ -132,8 +133,8 @@ class SettingsDialog(QDialog):
         folder_layout.setSpacing(10)  # Spacing between elements in layout
         # Set folder icon
         folder_icon = QLabel(self.folder_container)
-        folder_icon_path = os.path.join(
-            ASSETS_DIRECTORY, "folder_icon_1200x1200.png")
+        folder_icon_path = util.resource_path(os.path.join(
+            ASSETS_DIRECTORY, "folder_icon_1200x1200.png"))
         folder_icon.setPixmap(QPixmap(folder_icon_path).scaled(
             25, 25, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
         folder_icon.setFixedSize(25, 25)
@@ -148,8 +149,8 @@ class SettingsDialog(QDialog):
     def init_delete_button(self):
         # Set the search folder delete button
         self.delete_folder_button = QPushButton(self)
-        delete_folder_icon_path = os.path.join(
-            ASSETS_DIRECTORY, "trash_can_1200x1200.png")
+        delete_folder_icon_path = util.resource_path(os.path.join(
+            ASSETS_DIRECTORY, "trash_can_1200x1200.png"))
         self.delete_folder_button.setIcon(
             QIcon(QPixmap(delete_folder_icon_path)))
         self.delete_folder_button.setIconSize(QSize(25, 25))
@@ -172,7 +173,7 @@ class SettingsDialog(QDialog):
     def init_edit_button(self):
         # Set the edit search folder button
         self.edit_folder_button = QPushButton(self)
-        icon_path = os.path.join(ASSETS_DIRECTORY, "pen_icon_1200x1200.png")
+        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "pen_icon_1200x1200.png"))
         self.edit_folder_button.setIcon(
             QIcon(QPixmap(icon_path))
         )

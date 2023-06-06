@@ -188,8 +188,8 @@ class SpotlightSearch(QWidget):
             search_result_text += "<br><br>Sources:"
             search_result_text += "<table>"
             for source in sources:
-                icon_path = os.path.join(
-                    ASSETS_DIRECTORY, _get_image_path_by_filename(source))
+                icon_path = util.resource_path(os.path.join(
+                    ASSETS_DIRECTORY, _get_image_path_by_filename(source)))
                 search_result_text += f"""<tr>
                 <td style='padding-right: 4px;'>
                 <img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
@@ -317,7 +317,7 @@ class SpotlightSearch(QWidget):
 
     def create_logo_label(self):
         self.logo_label = QLabel(self)
-        logo_path = os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png")
+        logo_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png"))
         logo_pixmap = QPixmap(logo_path)
         self.logo_label.setPixmap(logo_pixmap.scaled(
             45, 45, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))  # Adjust logo size

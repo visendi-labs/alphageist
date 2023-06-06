@@ -10,34 +10,52 @@ import alphageist.config as cfg
 
 
 def vectorstore_exists(persist_directory: str) -> bool:
+    """This function checks if the vectorstore already 
+    exists at the specified directory"""
     return os.path.exists(persist_directory)
 
 
 def get_embeddings(config: dict) -> Embeddings:
-    """This method should return the proper Embeddings according
+    """This function returns the proper Embeddings according
     to the config"""
     if not cfg.API_KEY_OPEN_AI in config.keys():
         raise MissingConfigComponentError(cfg.API_KEY_OPEN_AI)
     return OpenAIEmbeddings(openai_api_key=config[cfg.API_KEY_OPEN_AI])
 
 
-def load_vectorstore(config: dict) -> Chroma:
-    embedding = get_embeddings(config)
-    if not cfg.VECTORDB_DIR in config:
+def app_support_dir(config: dict) -> str:
+    """This function returna the application support 
+    directory based on the operating system"""
+    if not cfg.VECTORDB_DIR in config.keys():
         raise MissingConfigComponentError(cfg.VECTORDB_DIR)
     vector_db_dir = config[cfg.VECTORDB_DIR]
     if not vector_db_dir:
-        raise ValueError("No directory provided for persisting db")
-    if not util.path_is_valid_format(vector_db_dir):
-        raise ValueError("{vector_db_dir} is not a valid directory")
+        raise ValueError(f"Path for persisting db cannot be empty")
 
-    logging.info(f"Loading vectorestore from {vector_db_dir}...")
-    client = Chroma(embedding_function=embedding,
-                    persist_directory=config[cfg.VECTORDB_DIR])
+    if os.name == 'nt':  # If the OS is Windows, use the APPDATA environment variable
+        app_data_path = os.getenv('APPDATA')
+        app_support_path = os.path.join(app_data_path, "Visendi Assistant", vector_db_dir)
+    else:  # Assume that it is macOS or Linux, use the user's Library/Application Support directory
+        app_support_path = os.path.expanduser("~/Library/Application Support/Visendi Assistant/" + vector_db_dir)
+
+    os.makedirs(app_support_path, exist_ok=True)
+    if not util.path_is_valid_format(app_support_path):
+        raise ValueError(f'"{app_support_path}" is not a valid directory')
+    return app_support_path
+
+
+def load_vectorstore(config: dict) -> Chroma:
+    """This function loads the vectorstore from the specified directory"""
+    embedding = get_embeddings(config)
+    vector_db_dir = app_support_dir(config)
+    logging.info(f"Loading vectorstore from {vector_db_dir}...")
+    client = Chroma(embedding_function=embedding, persist_directory=vector_db_dir)
     return client
 
 
 def create_vectorstore(config: dict) -> Chroma:
+    """This function creates the vectorstore from 
+    the documents found in the specified directory"""
     if not cfg.SEARCH_DIRS in config.keys():
         raise MissingConfigComponentError(cfg.SEARCH_DIRS)
 
@@ -50,13 +68,7 @@ def create_vectorstore(config: dict) -> Chroma:
     if not docs:
         raise ValueError(f"No supported files found in {search_dir}")
 
-    if not cfg.VECTORDB_DIR in config.keys():
-        raise MissingConfigComponentError(cfg.VECTORDB_DIR)
-    vector_db_dir = config[cfg.VECTORDB_DIR]
-    if not vector_db_dir:
-        raise ValueError(f"Path for persisting db can not be empty")
-    if not util.path_is_valid_format(vector_db_dir):
-        raise ValueError(f'"{vector_db_dir}" is not a valid directory')
+    vector_db_dir = app_support_dir(config)
 
     embedding = get_embeddings(config)
     logging.info(f"Creating vectorstore...")
