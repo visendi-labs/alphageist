@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLi
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
 import chromadb
+import openai
 
 from alphageist.query import query_vectorstore
 from alphageist.query import get_sources_from_answer
@@ -88,6 +89,8 @@ class SpotlightSearch(QWidget):
     vectorstore_state: state.State
     query_state: state.State
     config: dict
+    error_msg: str # Displayed in search bar
+    
 
     # Signals
     update_search_results_signal = pyqtSignal(str)
@@ -104,6 +107,7 @@ class SpotlightSearch(QWidget):
         self.mpos = QPoint()
         self.settings_open = False
         self.settings_dialog = None
+        self.error_msg = ""
 
         # Set up the user interface
         self.init_ui()
@@ -204,29 +208,46 @@ class SpotlightSearch(QWidget):
     def _update_searchbar_status(self):
         if not cfg.has_necessary_components(self.config):
             self.search_bar.setPlaceholderText(
-                "<- Open settings by right clicking on the logo...")
+                "← Open settings by right clicking on the logo...")
             self.search_bar.setEnabled(False)
             self.set_search_bar_error_frame(True)
             return
 
         if self.vectorstore_state == state.ERROR:
-            self.search_bar.setPlaceholderText(
-                "Error loading vectorstore DB. Check logs for more info.")
+            errtxt = self.error_msg if self.error_msg else "Error loading vectorstore DB. Check logs for more info."
+            self.search_bar.setText("")
             self.search_bar.setEnabled(False)
+            self.setFocus()
+            self.search_bar.setPlaceholderText(errtxt)
             self.set_search_bar_error_frame(True)
+            self.search_results.setVisible(False)
+            self.adjust_window_size()
             return
 
         if self.vectorstore_state == state.NOT_LOADED:
+            self.search_results.setVisible(False)
+            self.adjust_window_size()
             self.init_vectorstore()
+            self.setFocus()
             return
 
         if self.vectorstore_state == state.LOADING:
+            self.search_bar.setText("")
             self.search_bar.setPlaceholderText("Loading vectorstore...")
+            self.set_search_bar_error_frame(False)
             self.search_bar.setEnabled(False)
+            self.setFocus()
             return
 
         if self.query_state == state.ERROR:
+            self.search_bar.setText("")
+            errtxt = self.error_msg if self.error_msg else "Error querying. Check logs for more info."
+            self.search_bar.setPlaceholderText(errtxt)
             self.set_search_bar_error_frame(True)
+            self.search_bar.setEnabled(False)
+            self.adjust_window_size()
+            self.setFocus()
+            self.search_results.setVisible(False)
             return
 
         self.set_search_bar_error_frame(False)
@@ -245,7 +266,10 @@ class SpotlightSearch(QWidget):
         self.vectorstore_state = state.LOADING
         try:
             self.vectorstore = create_vectorstore(self.config)
+        except openai.error.AuthenticationError: 
+            self.error_msg = "Invalid OpenAI API Key"
         except Exception as e:
+            self.error_msg = "Unknown error: check logs"
             logging.exception(f"Unable to create vectorstore: {str(e)}")
             self.vectorstore_state = state.ERROR
         else:
@@ -355,7 +379,6 @@ class SpotlightSearch(QWidget):
             not self.hasFocus() and
             not self.search_bar.hasFocus() and
                 not self.search_results.hasFocus()):
-            print(f"Closing down: self.settings_open = {self.settings_open}")
             self.close()
 
     def _search(self, query: str):
@@ -369,10 +392,15 @@ class SpotlightSearch(QWidget):
             logging.exception(f"INDEX BROEKN: {str(e)}")
             self.vectorstore_state = state.ERROR
             self.query_state = state.ERROR
+        except NotImplementedError as e:
+            self.error_msg = "NOT IMPLEMENTED"
+            self.query_state = state.ERROR
+        except openai.error.AuthenticationError as e:
+            self.error_msg = "Error: Invalid OpenAI API Key"
+            self.query_state = state.ERROR
         except Exception as e:
             logging.exception(f"Error querying: {str(e)}")
             self.query_state = state.ERROR
-            # TODO: Show error in result window?
         else:
             logging.info(f"Search result: {res}")
             self.query_state = state.STANDBY
@@ -427,8 +455,7 @@ class SpotlightSearch(QWidget):
             if os.path.exists(self.config[cfg.VECTORDB_DIR]):
                 shutil.rmtree(self.config[cfg.VECTORDB_DIR])
 
-            if self.query_state == state.ERROR:
-                self.query_state = state.STANDBY
+            self.query_state = state.STANDBY
 
     @pyqtSlot()
     def adjust_window_size(self):
