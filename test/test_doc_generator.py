@@ -3,7 +3,7 @@ from os import path
 from alphageist.doc_generator import get_docs_from_file
 
 @pytest.mark.parametrize("filepath, expected_n_docs", [
-    (path.join("test", "data", "ww2", "ww2.txt"), 146),
+    (path.join("test", "data", "ww2", "ww2.txt"), 147),
     (path.join("test", "data", "Employees_list.csv"), 26),
     (path.join("test", "data", "code.py"), 1),
     (path.join("test", "data", "lithium_ion_battery_degradation_report.pdf"), 141),

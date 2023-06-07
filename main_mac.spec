@@ -6,8 +6,8 @@ block_cipher = None
 import sys ; sys.setrecursionlimit(sys.getrecursionlimit() * 5)
 
 a = Analysis(
-    ['/Users/jonathansmac/Python_projects/Alphageist/main.py'],
-    pathex=['/Users/jonathansmac/Python_projects/Alphageist'],
+    ['main.py'],
+    pathex=[],
     binaries=[],
     datas=[
         ('/Users/jonathansmac/.pyenv/versions/3.11.3/lib/python3.11/site-packages/langchain/chains/llm_summarization_checker/prompts/are_all_true_prompt.txt', 'langchain/chains/llm_summarization_checker/prompts/'), 
@@ -28,19 +28,30 @@ a = Analysis(
 )
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
-exe = EXE(pyz,
-          a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,
-          [],
-          name='Visendi',
-          debug=True,
-          bootloader_ignore_signals=False,
-          strip=False,
-          upx=False,
-          upx_exclude=[],
-          runtime_tmpdir=None,
-          console=False,
-          onefile=True
+exe = EXE(
+    pyz,
+    a.scripts,
+    [],
+    exclude_binaries=True,
+    name='main',
+    debug=True,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    console=True,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+)
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    name='Visendi',
 )

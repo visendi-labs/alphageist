@@ -1,6 +1,8 @@
 # Virtual environment
 env/
 .env
+new_env/
+.new_env
 
 # IDE settings
 .vscode/settings.json
@@ -22,3 +24,7 @@ __pycache__/
 
 # WSL2 Files
 *:Zone.Identifier
+
+# Build folders 
+build
+dist
