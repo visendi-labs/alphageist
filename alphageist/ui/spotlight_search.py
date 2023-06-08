@@ -90,7 +90,7 @@ class SpotlightSearch(QWidget):
 
     alphageist: Alphageist
     vectorstore: VectorStore
-    config: dict
+
     error_msg: str # Displayed in search bar
     
 
@@ -99,10 +99,8 @@ class SpotlightSearch(QWidget):
     setSearchResultVisible_signal = pyqtSignal(bool)
     adjustWindowSize_signal = pyqtSignal()
 
-    def __init__(self, alphagesist: Alphageist, config: dict):
+    def __init__(self, alphagesist: Alphageist):
         super().__init__()
-        self.config: dict = config
-
         self.alphageist = alphagesist
 
         self.mpos = QPoint()
@@ -135,8 +133,8 @@ class SpotlightSearch(QWidget):
 
     def init_vectorstore(self):
         # Load vectorstore on main thread, create on separate
-        if vectorstore_exists(self.config[cfg.VECTORDB_DIR]):
-            self.vectorstore = load_vectorstore(self.config)
+        if vectorstore_exists(self.alphageist.config[cfg.VECTORDB_DIR]):
+            self.vectorstore = load_vectorstore(self.alphageist.config)
             self.alphageist.vectorstore_state = state.LOADED
         else:
             vectorstore_loading_thread = threading.Thread(
@@ -207,7 +205,7 @@ class SpotlightSearch(QWidget):
         self.raw_response = []
 
     def _update_searchbar_status(self):
-        if not cfg.has_necessary_components(self.config):
+        if not cfg.has_necessary_components(self.alphageist.config):
             self.search_bar.setPlaceholderText(
                 "← Open settings by right clicking on the logo...")
             self.search_bar.setEnabled(False)
@@ -266,7 +264,7 @@ class SpotlightSearch(QWidget):
     def _create_vectorstore(self):
         self.alphageist.vectorstore_state = state.LOADING
         try:
-            self.vectorstore = create_vectorstore(self.config)
+            self.vectorstore = create_vectorstore(self.alphageist.config)
         except openai.error.AuthenticationError: 
             self.error_msg = "Invalid OpenAI API Key"
         except Exception as e:
@@ -387,7 +385,7 @@ class SpotlightSearch(QWidget):
         self.alphageist.query_state = state.QUERYING
         try:
             res = query_vectorstore(
-                self.vectorstore, query, self.config, callbacks=[self.callback])
+                self.vectorstore, query, self.alphageist.config, callbacks=[self.callback])
         except chromadb.errors.NoIndexException as e:
             # I think this happens if the db is not saved properly
             logging.exception(f"INDEX BROEKN: {str(e)}")
@@ -421,7 +419,7 @@ class SpotlightSearch(QWidget):
     def show_settings(self):
         # If the settings dialog already exists, show it and don't create a new
         if self.settings_dialog is None:
-            self.settings_dialog = SettingsDialog(self.config)
+            self.settings_dialog = SettingsDialog(self.alphageist.config)
             self.settings_dialog.opened.connect(self.settings_opened)
             self.settings_dialog.closed.connect(self.settings_closed)
         self.settings_dialog.show()
@@ -453,8 +451,8 @@ class SpotlightSearch(QWidget):
         self.settings_open = False
         if config_changed:
             self.alphageist.vectorstore_state = state.NOT_LOADED
-            if os.path.exists(self.config[cfg.VECTORDB_DIR]):
-                shutil.rmtree(self.config[cfg.VECTORDB_DIR])
+            if os.path.exists(self.alphageist.config[cfg.VECTORDB_DIR]):
+                shutil.rmtree(self.alphageist.config[cfg.VECTORDB_DIR])
 
             self.alphageist.query_state = state.STANDBY
 

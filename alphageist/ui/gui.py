@@ -18,7 +18,7 @@ def run():
     app = QApplication(sys.argv)
     config = get_config()
 
-    spotlight_search = SpotlightSearch(Alphageist(), config)
+    spotlight_search = SpotlightSearch(Alphageist(config))
     spotlight_search.show()
     exit_code = app.exec()
     sys.exit(exit_code)

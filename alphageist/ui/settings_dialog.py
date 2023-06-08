@@ -22,7 +22,6 @@ class SettingsDialog(QDialog):
     def __init__(self, config: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.config = config  # Only updated when saved
-        self.config = config  # Only updated when saved
         self.init_ui()
 
     def init_ui(self):
