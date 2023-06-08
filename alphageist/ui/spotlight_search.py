@@ -18,6 +18,7 @@ from alphageist.query import get_sources_from_answer
 from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from alphageist.callbackhandler import CustomStreamHandler
 from alphageist import state
+from alphageist.alphageist import Alphageist
 from alphageist.ui import util
 from langchain.vectorstores.base import VectorStore
 from langchain.schema import LLMResult
@@ -87,9 +88,8 @@ class ResultWindow(QTextBrowser):
 
 class SpotlightSearch(QWidget):
 
+    alphageist: Alphageist
     vectorstore: VectorStore
-    vectorstore_state: state.State
-    query_state: state.State
     config: dict
     error_msg: str # Displayed in search bar
     
@@ -99,12 +99,11 @@ class SpotlightSearch(QWidget):
     setSearchResultVisible_signal = pyqtSignal(bool)
     adjustWindowSize_signal = pyqtSignal()
 
-    def __init__(self, config: dict):
+    def __init__(self, alphagesist: Alphageist, config: dict):
         super().__init__()
         self.config: dict = config
 
-        self.vectorstore_state = state.NOT_LOADED
-        self.query_state = state.STANDBY
+        self.alphageist = alphagesist
 
         self.mpos = QPoint()
         self.settings_open = False
@@ -138,7 +137,7 @@ class SpotlightSearch(QWidget):
         # Load vectorstore on main thread, create on separate
         if vectorstore_exists(self.config[cfg.VECTORDB_DIR]):
             self.vectorstore = load_vectorstore(self.config)
-            self.vectorstore_state = state.LOADED
+            self.alphageist.vectorstore_state = state.LOADED
         else:
             vectorstore_loading_thread = threading.Thread(
                 target=self._create_vectorstore)
@@ -215,7 +214,7 @@ class SpotlightSearch(QWidget):
             self.set_search_bar_error_frame(True)
             return
 
-        if self.vectorstore_state == state.ERROR:
+        if self.alphageist.vectorstore_state == state.ERROR:
             errtxt = self.error_msg if self.error_msg else "Error loading vectorstore DB. Check logs for more info."
             self.search_bar.setText("")
             self.search_bar.setEnabled(False)
@@ -226,14 +225,14 @@ class SpotlightSearch(QWidget):
             self.adjust_window_size()
             return
 
-        if self.vectorstore_state == state.NOT_LOADED:
+        if self.alphageist.vectorstore_state == state.NOT_LOADED:
             self.search_results.setVisible(False)
             self.adjust_window_size()
             self.init_vectorstore()
             self.setFocus()
             return
 
-        if self.vectorstore_state == state.LOADING:
+        if self.alphageist.vectorstore_state == state.LOADING:
             self.search_bar.setText("")
             self.search_bar.setPlaceholderText("Loading vectorstore...")
             self.set_search_bar_error_frame(False)
@@ -241,7 +240,7 @@ class SpotlightSearch(QWidget):
             self.setFocus()
             return
 
-        if self.query_state == state.ERROR:
+        if self.alphageist.query_state == state.ERROR:
             self.search_bar.setText("")
             errtxt = self.error_msg if self.error_msg else "Error querying. Check logs for more info."
             self.search_bar.setPlaceholderText(errtxt)
@@ -265,7 +264,7 @@ class SpotlightSearch(QWidget):
                 self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
 
     def _create_vectorstore(self):
-        self.vectorstore_state = state.LOADING
+        self.alphageist.vectorstore_state = state.LOADING
         try:
             self.vectorstore = create_vectorstore(self.config)
         except openai.error.AuthenticationError: 
@@ -273,10 +272,10 @@ class SpotlightSearch(QWidget):
         except Exception as e:
             self.error_msg = "Unknown error: check logs"
             logging.exception(f"Unable to create vectorstore: {str(e)}")
-            self.vectorstore_state = state.ERROR
+            self.alphageist.vectorstore_state = state.ERROR
         else:
             logging.info("Vectorstore successfully created")
-            self.vectorstore_state = state.LOADED
+            self.alphageist.vectorstore_state = state.LOADED
 
     def init_ui(self):
         # Set window properties
@@ -385,27 +384,27 @@ class SpotlightSearch(QWidget):
 
     def _search(self, query: str):
         # Runs on separate thread
-        self.query_state = state.QUERYING
+        self.alphageist.query_state = state.QUERYING
         try:
             res = query_vectorstore(
                 self.vectorstore, query, self.config, callbacks=[self.callback])
         except chromadb.errors.NoIndexException as e:
             # I think this happens if the db is not saved properly
             logging.exception(f"INDEX BROEKN: {str(e)}")
-            self.vectorstore_state = state.ERROR
-            self.query_state = state.ERROR
+            self.alphageist.vectorstore_state = state.ERROR
+            self.alphageist.query_state = state.ERROR
         except NotImplementedError as e:
             self.error_msg = "NOT IMPLEMENTED"
-            self.query_state = state.ERROR
+            self.alphageist.query_state = state.ERROR
         except openai.error.AuthenticationError as e:
             self.error_msg = "Error: Invalid OpenAI API Key"
-            self.query_state = state.ERROR
+            self.alphageist.query_state = state.ERROR
         except Exception as e:
             logging.exception(f"Error querying: {str(e)}")
-            self.query_state = state.ERROR
+            self.alphageist.query_state = state.ERROR
         else:
             logging.info(f"Search result: {res}")
-            self.query_state = state.STANDBY
+            self.alphageist.query_state = state.STANDBY
 
     def search(self):
         if not self.search_bar.text():
@@ -453,11 +452,11 @@ class SpotlightSearch(QWidget):
     def settings_closed(self, config_changed: bool):
         self.settings_open = False
         if config_changed:
-            self.vectorstore_state = state.NOT_LOADED
+            self.alphageist.vectorstore_state = state.NOT_LOADED
             if os.path.exists(self.config[cfg.VECTORDB_DIR]):
                 shutil.rmtree(self.config[cfg.VECTORDB_DIR])
 
-            self.query_state = state.STANDBY
+            self.alphageist.query_state = state.STANDBY
 
     @pyqtSlot()
     def adjust_window_size(self):
