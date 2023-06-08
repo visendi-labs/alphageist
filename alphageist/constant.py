@@ -1,2 +1,2 @@
-APP_NAME = "Visendi Assistant"
+APP_NAME = "Visendi Search"
 AUTHOR = "Visendi"

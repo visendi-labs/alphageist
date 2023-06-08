@@ -24,27 +24,23 @@ def get_embeddings(config: dict) -> Embeddings:
     return OpenAIEmbeddings(openai_api_key=config[cfg.API_KEY_OPEN_AI])
 
 
-def app_support_dir(config: dict) -> str:
-    """This function returns the application support 
-    directory based on the operating system"""
+def get_vectorstore_path(config:dict)->str:
+    """This function returns the path to the vector DB
+     based on the operating system"""
     if not cfg.VECTORDB_DIR in config.keys():
         raise MissingConfigComponentError(cfg.VECTORDB_DIR)
     vector_db_dir = config[cfg.VECTORDB_DIR]
     if not vector_db_dir:
-        raise ValueError(f"Path for persisting db cannot be empty")
-
-    app_support_path = os.path.join(user_config_dir(appname="Visendi Assistant", appauthor=False), vector_db_dir)
-
-    os.makedirs(app_support_path, exist_ok=True)
-    if not util.path_is_valid_format(app_support_path):
-        raise ValueError(f'"{app_support_path}" is not a valid directory')
-    return app_support_path
-
+        raise ValueError("No directory provided for persisting db")
+    if not util.path_is_valid_format(vector_db_dir):
+        raise ValueError("{vector_db_dir} is not a valid directory")
+    return vector_db_dir
+    
 
 def load_vectorstore(config: dict) -> Chroma:
     """This function loads the vectorstore from the specified directory"""
     embedding = get_embeddings(config)
-    vector_db_dir = app_support_dir(config)
+    vector_db_dir = get_vectorstore_path(config)
     logging.info(f"Loading vectorstore from {vector_db_dir}...")
     client = Chroma(embedding_function=embedding, persist_directory=vector_db_dir)
     return client
@@ -65,7 +61,7 @@ def create_vectorstore(config: dict) -> Chroma:
     if not docs:
         raise ValueError(f"No supported files found in {search_dir}")
 
-    vector_db_dir = app_support_dir(config)
+    vector_db_dir = get_vectorstore_path(config)
 
     embedding = get_embeddings(config)
     logging.info(f"Creating vectorstore...")

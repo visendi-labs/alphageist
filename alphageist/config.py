@@ -5,14 +5,17 @@ from platformdirs import user_config_dir
 from .constant import APP_NAME, AUTHOR
 
 API_KEY_OPEN_AI = "API_KEY_OPEN_AI"
-VECTORDB_DIR = "VECTOR_DB_PATH" # The directory in wich the DB is stored
+VECTORDB_DIR = "VECTOR_DB_PATH" # The directory in which the DB is stored
 SEARCH_DIRS = "SEARCH_DIRS"
 
-DEFAULT_CONFIG = {
-    API_KEY_OPEN_AI: "",
-    VECTORDB_DIR: ".alphageist",
-    SEARCH_DIRS: ""
-}
+def get_default_config(ensure_exists: bool = True) -> dict:
+    # Create a default config file
+    DEFAULT_CONFIG = {
+        API_KEY_OPEN_AI: "",
+        VECTORDB_DIR: get_vectorDB_file_path(),
+        SEARCH_DIRS: ""
+    }
+    return DEFAULT_CONFIG
 
 def get_config_file_path(ensure_exists: bool = True) -> str:
     # Use the user_config_dir function to get the directory path
@@ -21,12 +24,17 @@ def get_config_file_path(ensure_exists: bool = True) -> str:
     # Define your config file path
     return os.path.join(config_dir, "config.json")
 
+def get_vectorDB_file_path(ensure_exists: bool = True) -> str:
+    # Use the user_config_dir function to get the directory path
+    vectorDB_dir = user_config_dir(APP_NAME, AUTHOR, ensure_exists=ensure_exists)
+
+    # Define your config file path
+    return os.path.join(vectorDB_dir, "vectorDatabase")
 
 def save_config(config_file: str, config: dict):
     logging.info(f"Saving config to {config_file}")
     with open(config_file, 'w') as f:
         f.write(json.dumps(config))
-
 
 def load_config(config_file: str, default_config: dict) -> dict:
     if os.path.exists(config_file):

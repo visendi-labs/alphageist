@@ -11,7 +11,7 @@ TEST_DATA_PATH = os.path.join("test", "data")
 
 def get_config()->dict:
     cfg_file = cfg.get_config_file_path()
-    return cfg.load_config(cfg_file, cfg.DEFAULT_CONFIG)
+    return cfg.load_config(cfg_file, cfg.get_default_config())
 
 def run():
     app = QApplication(sys.argv)
