@@ -8,6 +8,8 @@ from alphageist.doc_generator import get_docs_from_file
     (path.join("test", "data", "code.py"), 1),
     (path.join("test", "data", "lithium_ion_battery_degradation_report.pdf"), 141),
     (path.join("test", "data", "volvo q3 -22 summary.docx"), 2),
+    (path.join("test", "data", "Waystream financial data.xlsx"), 45),
+    (path.join("test", "data", "fordonsstatistik-maj-2023.xls"), 15),
     (path.join("test", "data", "spotify1.jpeg"), 0), # Not supported should return 0
     (path.join("test", "data", ".~$PRD_MobileApp.docx"), 0), 
     (path.join("test", "data", "~$PRD_MobileApp.docx"), 0),

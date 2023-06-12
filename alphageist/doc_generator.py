@@ -6,6 +6,7 @@ from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
 from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import UnstructuredExcelLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
 from langchain.document_loaders.base import BaseLoader
@@ -31,15 +32,19 @@ _loader_by_filetype:dict[str,Any] = {
     ".go": TextLoader,
     ".pptx": PPTXLoader,
     ".docx": Docx2txtLoader,
+    ".xlsx": UnstructuredExcelLoader,
+    ".xls": UnstructuredExcelLoader,
 }
 _docu_splitter_by_filetype = {
-   ".txt": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".pdf": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".txt": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".pdf": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
     ".csv": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".py": lambda: PythonCodeTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".go": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".pptx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
-   ".docx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".py": lambda: PythonCodeTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".go": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".pptx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".docx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".xlsx": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
+    ".xls": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
 }
 
 

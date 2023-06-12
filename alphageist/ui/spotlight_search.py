@@ -36,6 +36,8 @@ _icon_by_filetype = {
     ".go": "golang.png",
     ".pptx": "pptx.png",
     ".docx": "word.png",
+    ".xlsx": "excel.png",
+    ".xls": "excel.png",
     "default": "default_file.png"
 }
 
