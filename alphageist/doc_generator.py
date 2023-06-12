@@ -11,6 +11,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter
 from langchain.document_loaders.base import BaseLoader
 
 from alphageist.custom_loaders import PPTXLoader
+from alphageist.util import is_temp_file
 
 def _get_file_paths(path:str)->Iterator[str]:
     for root, dirs, files in os.walk(path):
@@ -44,6 +45,8 @@ _docu_splitter_by_filetype = {
 
 def get_docs_from_file(file_path:str)->list[Document]:
     file_ext = _get_file_extension(file_path)
+    if is_temp_file(file_path):
+        return [] # Skip temporary files
     if not file_ext in _loader_by_filetype:
         return [] # Unsupported file
     print(f"Loading {file_path}")
