@@ -7,9 +7,6 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.vectorstores.base import VectorStore
 from alphageist import config as cfg
 
-LLM_MODEL_NAME = "gpt-3.5-turbo"
-TEMPERATURE = 0.0
-
 def get_sources_from_answer(answer: str) -> list[str]:
         if re.search(r"SOURCES:\s", answer):
             _, sources = re.split(r"SOURCES:\s", answer)
@@ -31,8 +28,8 @@ def query_vectorstore(vectorstore: VectorStore,
 
     streaming = bool(callbacks)
     try:
-        llm = ChatOpenAI(temperature=TEMPERATURE, 
-                         model_name=LLM_MODEL_NAME,
+        llm = ChatOpenAI(temperature=config[cfg.LLM_TEMPERATURE], 
+                         model_name=config[cfg.LLM_MODEL_NAME],
                          streaming=streaming, 
                          callbacks=callbacks, 
                          openai_api_key=config[cfg.API_KEY_OPEN_AI])
@@ -41,8 +38,8 @@ def query_vectorstore(vectorstore: VectorStore,
         raise err
 
     logging.debug(
-        f"Querying using {LLM_MODEL_NAME} on temp {TEMPERATURE} (streaming: {streaming})")
-
+        f"Querying using {config[cfg.LLM_MODEL_NAME]} on temp {config[cfg.LLM_TEMPERATURE]} (streaming: {streaming})")
+    
     try:
         res = index.query_with_sources(query, llm=llm)
     except Exception as err:

@@ -4,6 +4,8 @@ import os
 from platformdirs import user_config_dir
 from .constant import APP_NAME, AUTHOR
 
+LLM_MODEL_NAME = "LLM_MODEL_NAME" 
+LLM_TEMPERATURE = "LLM_TEMPERATURE"
 API_KEY_OPEN_AI = "API_KEY_OPEN_AI"
 VECTORDB_DIR = "VECTOR_DB_PATH" # The directory in which the DB is stored
 SEARCH_DIRS = "SEARCH_DIRS"
@@ -11,6 +13,8 @@ SEARCH_DIRS = "SEARCH_DIRS"
 def get_default_config(ensure_exists: bool = True) -> dict:
     # Create a default config file
     DEFAULT_CONFIG = {
+        LLM_MODEL_NAME: "gpt-3.5-turbo",
+        LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
         VECTORDB_DIR: get_vectorDB_file_path(),
         SEARCH_DIRS: ""
