@@ -33,17 +33,18 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='main',
-    debug=True,
+    name='Visendi Search',
+    debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['exe_assets/Visendi.icns'],
 )
 coll = COLLECT(
     exe,
@@ -53,5 +54,14 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Visendi',
+    name='Visendi Search',
+)
+app = BUNDLE(
+    coll,
+    name='Visendi Search.app',
+    icon='exe_assets/Visendi.icns',
+    bundle_identifier=None,
+    info_plist={
+        'CFBundleShortVersionString': '0.0.1',
+    },
 )
