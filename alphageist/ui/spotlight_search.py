@@ -194,7 +194,7 @@ class SpotlightSearch(QWidget):
                     ASSETS_DIRECTORY, _get_image_path_by_filename(source)))
                 search_result_text += f"""<tr>
                 <td style='padding-right: 4px;'>
-                <img src='{icon_path}' width='16' height='16' style='vertical-align: middle;' />
+                <img src='{icon_path}' style='vertical-align: middle;' />
                 </td>
                 <td>
                 <a href='{source.strip()}'>{source.strip()}</a>
