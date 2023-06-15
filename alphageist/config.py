@@ -3,6 +3,12 @@ import json
 import os
 from platformdirs import user_config_dir
 from .constant import APP_NAME, AUTHOR
+from alphageist import state
+from alphageist import errors
+from alphageist import constant
+
+logger = logging.getLogger(constant.LOGGER_NAME)
+
 
 LLM_MODEL_NAME = "LLM_MODEL_NAME" 
 LLM_TEMPERATURE = "LLM_TEMPERATURE"
@@ -10,15 +16,27 @@ API_KEY_OPEN_AI = "API_KEY_OPEN_AI"
 VECTORDB_DIR = "VECTOR_DB_PATH" # The directory in which the DB is stored
 SEARCH_DIRS = "SEARCH_DIRS"
 
-def get_default_config(ensure_exists: bool = True) -> dict:
+required_keys = {API_KEY_OPEN_AI, SEARCH_DIRS, VECTORDB_DIR}
+class Config(dict):
+    state: state.State
+    def assert_has_required_keys(self) -> None:
+        """Checks that the keys exist and that they have defined values"""
+        missing_keys = required_keys - set(self.keys())
+        if missing_keys:
+            raise errors.MissingConfigComponentsError(missing_keys) 
+        missing_values = {key for key in required_keys if not self[key]}
+        if missing_values:
+            raise errors.MissingConfigValueError(missing_values)
+
+def get_default_config(ensure_exists: bool = True) -> Config:
     # Create a default config file
-    DEFAULT_CONFIG = {
+    DEFAULT_CONFIG = Config({
         LLM_MODEL_NAME: "gpt-3.5-turbo",
         LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
         VECTORDB_DIR: get_vectorDB_file_path(),
         SEARCH_DIRS: ""
-    }
+    })
     return DEFAULT_CONFIG
 
 def get_config_file_path(ensure_exists: bool = True) -> str:
@@ -36,15 +54,15 @@ def get_vectorDB_file_path(ensure_exists: bool = True) -> str:
     return os.path.join(vectorDB_dir, "vectorDatabase")
 
 def save_config(config_file: str, config: dict):
-    logging.info(f"Saving config to {config_file}")
+    logger.info(f"Saving config to {config_file}")
     with open(config_file, 'w') as f:
         f.write(json.dumps(config))
 
-def load_config(config_file: str, default_config: dict) -> dict:
+def load_config(config_file: str, default_config: Config) -> Config:
     if os.path.exists(config_file):
-        logging.info(f"Loading config from {config_file}")
+        logger.info(f"Loading config from {config_file}")
         with open(config_file, 'r') as f:
-            loaded_config = json.load(f)
+            loaded_config = Config(json.load(f))
         
         # Check if all keys in default config are in loaded config
         for key in default_config:
@@ -55,14 +73,3 @@ def load_config(config_file: str, default_config: dict) -> dict:
     else:
         return default_config  # if no config exists, return default
 
-def has_necessary_components(config: dict)-> bool:
-    required_keys = [API_KEY_OPEN_AI, SEARCH_DIRS, VECTORDB_DIR]
-    for key in required_keys:
-        if not key in config.keys():
-            return False
-    for key in required_keys:
-        if not isinstance(config[key], str):
-            raise ValueError(f"Value for key '{key}' must be a string")
-        if config[key].strip() == "":
-            return False
-    return True

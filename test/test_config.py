@@ -6,17 +6,21 @@ from unittest.mock import mock_open, patch
 
 from alphageist.config import save_config
 from alphageist.config import load_config
-from alphageist.config import has_necessary_components
+from alphageist.config import Config
+from alphageist import errors
 import alphageist.config as cfg
 
 TEST_FILE_PATH ="abccj"
 
-TEST_DEFAULT_CONFIG = {'key': 'default_value'}  
+TEST_DEFAULT_CONFIG = Config({'key': 'default_value'})
 
 test_data = path.join("test", "data")
-test_cfg = {cfg.API_KEY_OPEN_AI: "abc123",
+test_cfg_valid = Config({cfg.API_KEY_OPEN_AI: "abc123",
             cfg.VECTORDB_DIR: ".",
-            cfg.SEARCH_DIRS: test_data}
+            cfg.SEARCH_DIRS: test_data})
+
+test_cfg_missing_api_key = Config({cfg.VECTORDB_DIR: ".",
+            cfg.SEARCH_DIRS: test_data})
 
 def test_save_settings_config_is_saved():
     settings = {'key': 'value'}
@@ -45,9 +49,9 @@ def test_load_settings_file_not_found():
     assert result == TEST_DEFAULT_CONFIG
 
 def test_load_settings_missing_keys_are_filled_from_default():
-    partial_settings = {'key1': 'value1'}  # Assume 'key2' is missing and it's in the default config
-    default_config = {'key1': 'default1', 'key2': 'default2'}
-    expected_result = {'key1': 'value1', 'key2': 'default2'}
+    partial_settings = Config({'key1': 'value1'})  # Assume 'key2' is missing and it's in the default config
+    default_config = Config({'key1': 'default1', 'key2': 'default2'})
+    expected_result = Config({'key1': 'value1', 'key2': 'default2'})
 
     m = mock_open(read_data=json.dumps(partial_settings))
     with patch('os.path.exists', return_value=True):  # Mock os.path.exists to return True
@@ -55,28 +59,30 @@ def test_load_settings_missing_keys_are_filled_from_default():
             result = load_config('filepath', default_config)
     assert result == expected_result
 
-def test_has_necessary_components():
-    # Test with all required components present and correct
-    
-    assert has_necessary_components(test_cfg) == True
+def test_all_required_keys_present_with_values():
+    config = Config({
+        cfg.API_KEY_OPEN_AI: 'some_key',
+        cfg.VECTORDB_DIR: 'some_path',
+        cfg.SEARCH_DIRS: 'some_dirs',
+    })
+    # Should not raise any exception
+    config.assert_has_required_keys()
 
-    # Test with a missing key
-    config = {
-        cfg.SEARCH_DIRS: "/example/path"
-    }
-    assert has_necessary_components(config) == False
+def test_missing_required_key():
+    config = Config({
+        cfg.API_KEY_OPEN_AI: 'some_key',
+        cfg.SEARCH_DIRS: 'some_dirs',
+    })
+    # Should raise MissingConfigComponentsError as VECTORDB_DIR is missing
+    with pytest.raises(errors.MissingConfigComponentsError):
+        config.assert_has_required_keys()
 
-    # Test with an empty string value
-    config = {
-        cfg.API_KEY_OPEN_AI: "",
-        cfg.SEARCH_DIRS: "/example/path"
-    }
-    assert has_necessary_components(config) == False
-
-
-    # Test with all keys present but one value is whitespace only
-    config = {
-        cfg.API_KEY_OPEN_AI: "   ",
-        cfg.SEARCH_DIRS: "/example/path"
-    }
-    assert has_necessary_components(config) == False
+def test_empty_required_key_value():
+    config = Config({
+        cfg.API_KEY_OPEN_AI: 'some_key',
+        cfg.VECTORDB_DIR: '',
+        cfg.SEARCH_DIRS: 'some_dirs',
+    })
+    # Should raise MissingConfigValueError as VECTORDB_DIR is empty
+    with pytest.raises(errors.MissingConfigValueError):
+        config.assert_has_required_keys()

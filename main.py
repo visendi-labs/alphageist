@@ -1,19 +1,34 @@
 from alphageist.ui import gui
+from alphageist import errors
+from alphageist import constant
 from dotenv import load_dotenv
 import logging
 
 
-class ForbiddenImportError(Exception):
-    pass
 
+def setup_logging():
+    FORMAT = "%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s"
+    logging.basicConfig(level=logging.WARNING,
+                    format=FORMAT)
+    logger = logging.getLogger(constant.LOGGER_NAME)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+
+    # Create handlers
+    c_handler = logging.StreamHandler()
+    c_handler.setLevel(logging.INFO)
+    c_format = logging.Formatter(FORMAT)
+    c_handler.setFormatter(c_format)
+
+    # Add handlers to the logger
+    logger.addHandler(c_handler)
 
 def main():
-    logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s')
+    setup_logging()
     gui.run()
 
 
 if __name__ == "__main__":
     main()
 else:
-    raise ForbiddenImportError("this file is not meant to be imported")
+    raise errors.ForbiddenImportError("this file is not meant to be imported")
