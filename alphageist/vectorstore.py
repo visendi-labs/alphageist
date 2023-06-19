@@ -175,7 +175,7 @@ def create_vectorstore(config: cfg.Config) -> Chroma:
     docs = get_docs_from_path(search_dir)
 
     if not docs:
-        raise ValueError(f"No supported files found in {search_dir}")
+        raise errors.NoSupportedFilesInDirectoryError(search_dir)
 
     vector_db_dir = get_vectorstore_path(config)
 

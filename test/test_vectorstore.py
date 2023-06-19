@@ -67,7 +67,7 @@ def test_create_vectorstore_no_vectore_store_in_cfg_error():
     assert cfg.VECTORDB_DIR in str(exec_info.value)
 
 def test_get_docs_from_file_non_existing():
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(errors.NoSupportedFilesInDirectoryError) as exc_info:
         config = test_cfg.copy()
         config[cfg.SEARCH_DIRS]= empty_dir_path
         create_vectorstore(config)
