@@ -102,6 +102,7 @@ class SpotlightSearch(QWidget):
     update_search_results_signal = pyqtSignal(str)
     setSearchResultVisible_signal = pyqtSignal(bool)
     adjustWindowSize_signal = pyqtSignal()
+    focus_signal = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -118,6 +119,8 @@ class SpotlightSearch(QWidget):
         self.check_focus_timer = QTimer(self)
         self.check_focus_timer.timeout.connect(self.check_focus)
         self.check_focus_timer.start(500)
+
+        self.focus_signal.connect(self.setFocusSlot)
 
         self.setFocus()  # Sets focus so the program wont shutdown
 
@@ -139,6 +142,10 @@ class SpotlightSearch(QWidget):
             self.on_llm_new_token, self.on_llm_end)
         self.muted = False
         self.update_search_results_signal.connect(self.update_search_results)
+
+    @pyqtSlot()
+    def setFocusSlot(self):
+        self.setFocus()
 
     @pyqtSlot(bool)
     def setSearchResultsVisible(self, visible: bool):
@@ -176,6 +183,8 @@ class SpotlightSearch(QWidget):
         if new_state is state.LOADING_VECTORSTORE:
             self.set_search_bar_disabled("Loading vectorstore...")
         if new_state is state.STANDBY:
+            # Need to force focus if user clicks outside during vectorstore loading
+            self.focus_signal.emit()
             self.set_search_bar_stand_by()
         if new_state is state.QUERYING:
             self.set_search_bar_disabled()
@@ -357,7 +366,8 @@ class SpotlightSearch(QWidget):
         if (not self.settings_open and
             not self.hasFocus() and
             not self.search_bar.hasFocus() and
-                not self.search_results.hasFocus()):
+            not self.search_results.hasFocus() and
+            not self.alphageist.state is state.LOADING_VECTORSTORE):
             self.close()
 
     
