@@ -14,7 +14,7 @@ a = Analysis(
         ('C:\\Projects\\alphageist\\venv\\Lib\\site-packages\\langchain\\chains\\llm_summarization_checker\\prompts\\check_facts.txt', 'langchain/chains/llm_summarization_checker/prompts/'), 
         ('C:\\Projects\\alphageist\\venv\\Lib\\site-packages\\langchain\\chains\\llm_summarization_checker\\prompts\\create_facts.txt', 'langchain/chains/llm_summarization_checker/prompts/'), 
         ('C:\\Projects\\alphageist\\venv\\Lib\\site-packages\\langchain\\chains\\llm_summarization_checker\\prompts\\revise_summary.txt', 'langchain/chains/llm_summarization_checker/prompts/'),
-        ('C:\\Projects\\alphageist\\alphageist\\ui\\assets\\*', 'alphageist/ui/assets')
+        ('C:\\Projects\\alphageist\\alphageist\\ui\\assets\\*', 'alphageist/ui/assets'),
     ],
     hiddenimports=['tiktoken_ext.openai_public', 'tiktoken_ext'],
     hookspath=[],
@@ -38,14 +38,13 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='exe_assets/Visendi.ico',
-    version='0.0.1',
+    icon='alphageist/ui/assets/Visendi.ico',
 )
 coll = COLLECT(
     exe,

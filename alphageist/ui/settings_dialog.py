@@ -25,6 +25,7 @@ class SettingsDialog(QDialog):
         self.init_ui()
 
     def init_ui(self):
+        self.setWindowIcon(QIcon(os.path.join(ASSETS_DIRECTORY, "Visendi.ico")))
         self.setWindowTitle("Settings")
         self.setModal(True)  # Set the dialog to be application modal
         # Add the "stay on top" window flag

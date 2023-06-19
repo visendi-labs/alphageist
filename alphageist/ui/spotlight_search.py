@@ -255,6 +255,7 @@ class SpotlightSearch(QWidget):
     def init_ui(self):
         # Set window properties
         self.set_window_properties()
+        self.setWindowIcon(QIcon(os.path.join(ASSETS_DIRECTORY, "Visendi.ico")))
         self.setStyleSheet(f"""
             color: {COLOR.WHITE};
             font-family: {DESIGN.FONT_FAMILY};

@@ -44,7 +44,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['exe_assets/Visendi.icns'],
+    icon=['alphageist/ui/assets/Visendi.icns'],
 )
 coll = COLLECT(
     exe,
@@ -59,7 +59,7 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='Visendi Search.app',
-    icon='exe_assets/Visendi.icns',
+    icon='alphageist/ui/assets/Visendi.icns',
     bundle_identifier=None,
     info_plist={
         'CFBundleShortVersionString': '0.0.1',
