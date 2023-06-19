@@ -1,4 +1,4 @@
-from pptx import Presentation
+from pptx import Presentation # type: ignore
 from typing import List, Optional
 from langchain.docstore.document import Document
 from langchain.document_loaders.base import BaseLoader

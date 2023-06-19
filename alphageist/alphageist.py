@@ -5,7 +5,7 @@ import shutil
 import typing
 
 from langchain.callbacks.base import BaseCallbackHandler
-import chromadb
+import chromadb # type: ignore
 
 from alphageist import state as s
 from alphageist.vectorstore import vectorstore_exists

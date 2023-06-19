@@ -398,10 +398,10 @@ class SettingsDialog(QDialog):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == Qt.MouseButton.LeftButton:
-            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft() # type: ignore
             event.accept()
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if event.buttons() == Qt.MouseButton.LeftButton:
-            self.move(event.globalPosition().toPoint() - self.drag_pos)
+            self.move(event.globalPosition().toPoint() - self.drag_pos) # type: ignore
             event.accept()

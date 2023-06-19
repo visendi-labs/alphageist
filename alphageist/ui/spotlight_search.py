@@ -7,12 +7,12 @@ import platform
 
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
+from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize, QUrl
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
-import chromadb
+import chromadb # type: ignore
 import openai
 
 from alphageist.query import get_sources_from_answer
@@ -396,7 +396,7 @@ class SpotlightSearch(QWidget):
         context_menu.addAction(self.settings_action)
         context_menu.exec(self.logo_label.mapToGlobal(position))
 
-    def open_file_link(self, url: str) -> None:
+    def open_file_link(self, url: QUrl) -> None:
         filepath = url.path()
         # For Windows
         if platform.system() == 'Windows':

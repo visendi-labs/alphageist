@@ -63,7 +63,7 @@ class VectorStore(util.StateSubscriptionMixin):
             logger.info("Vectorstore successfully created")
             self.state = state.LOADED
 
-    def _load_vectorstore(self, config: dict):
+    def _load_vectorstore(self, config: cfg.Config):
         try:
             self.store = load_vectorstore(config)
         except Exception as e:
