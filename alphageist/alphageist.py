@@ -47,6 +47,9 @@ class Alphageist(util.StateSubscriptionMixin):
 
         if not isinstance(config, cfg.Config):
             raise ValueError(f"config has to be of type config.Config not {type(config)}")
+
+        self.config = config
+
         try:
             config.assert_has_required_keys()
         except (errors.MissingConfigComponentsError, errors.MissingConfigValueError) as e:
@@ -54,8 +57,8 @@ class Alphageist(util.StateSubscriptionMixin):
             self.state = s.ERROR
         except Exception as e:
             raise e
+            self.state = s.ERROR
         else:
-            self.config = config
             self.state = s.CONFIGURED
 
     def start_init_vectorstore(self)->None:

@@ -154,6 +154,8 @@ class SpotlightSearch(QWidget):
         exception = self.alphageist.exception
         if isinstance(exception, openai.error.AuthenticationError):
             self.set_search_bar_error_message("Invalid API Key")
+        elif isinstance(exception, errors.MissingConfigValueError):
+            self.set_search_bar_error_message(f"← Open settings...")
         elif isinstance(exception, chromadb.errors.NoIndexException):
             self.set_search_bar_error_message("Index broken")
         elif isinstance(exception, Exception):
