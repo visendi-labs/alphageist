@@ -320,7 +320,7 @@ class SettingsDialog(QDialog):
 
     @property
     def settings_has_changed(self)->bool:
-        return (self.api_key_input.text() != self.config[cfg.API_KEY_OPEN_AI] or 
+        return (self.api_key_input.text().strip() != self.config[cfg.API_KEY_OPEN_AI] or 
             self.folder_path.text() != self.config[cfg.SEARCH_DIRS])
 
     def update_save_button_state(self):
@@ -342,7 +342,7 @@ class SettingsDialog(QDialog):
     def save_and_close(self):
         
         # Update the config object
-        self.config[cfg.API_KEY_OPEN_AI] = self.api_key_input.text()
+        self.config[cfg.API_KEY_OPEN_AI] = self.api_key_input.text().strip()
         self.config[cfg.SEARCH_DIRS] = self.folder_path.text()
 
         # Save the config to file
