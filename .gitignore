@@ -28,3 +28,6 @@ __pycache__/
 # Build folders 
 build
 dist
+
+# Log files
+*.log

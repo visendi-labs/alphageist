@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import logging
 
 
-
 def setup_logging():
     FORMAT = "%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s"
     logging.basicConfig(level=logging.WARNING,
@@ -20,8 +19,15 @@ def setup_logging():
     c_format = logging.Formatter(FORMAT)
     c_handler.setFormatter(c_format)
 
+    # Create file handler which logs even debug messages
+    f_handler = logging.FileHandler('logfile.log')
+    f_handler.setLevel(logging.INFO)
+    f_format = logging.Formatter(FORMAT)
+    f_handler.setFormatter(f_format)
+
     # Add handlers to the logger
     logger.addHandler(c_handler)
+    logger.addHandler(f_handler)
 
 def main():
     setup_logging()
