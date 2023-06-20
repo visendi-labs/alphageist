@@ -22,8 +22,6 @@ import alphageist.config as cfg
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
-LLM_MODEL_NAME = "gpt-3.5-turbo"
-TEMPERATURE = 0.0
 class VectorStore(util.StateSubscriptionMixin):
     exception: Exception
     store: LangchainVectorstore
@@ -108,13 +106,13 @@ class VectorStore(util.StateSubscriptionMixin):
 
         index = self._get_vectorstore_index_wrapper()
         streaming = bool(callbacks)
-        llm = chat_models.ChatOpenAI(temperature=TEMPERATURE, # type: ignore
-                             model_name=LLM_MODEL_NAME,
+        llm = chat_models.ChatOpenAI(temperature=config[cfg.LLM_TEMPERATURE], # type: ignore
+                             model_name=config[cfg.LLM_MODEL_NAME],
                              streaming=streaming, 
                              callbacks=callbacks, 
                              openai_api_key=config[cfg.API_KEY_OPEN_AI])
-        logger.debug(
-            f"Querying using {LLM_MODEL_NAME} on temp {TEMPERATURE} (streaming: {streaming})")
+        logger.info(
+            f"Querying using {config[cfg.LLM_MODEL_NAME]} on temp {config[cfg.LLM_TEMPERATURE]} (streaming: {streaming})")
 
         try:
             res = index.query_with_sources(query_string, llm=llm)
