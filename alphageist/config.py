@@ -31,7 +31,7 @@ class Config(dict):
 def get_default_config(ensure_exists: bool = True) -> Config:
     # Create a default config file
     DEFAULT_CONFIG = Config({
-        LLM_MODEL_NAME: "gpt-3.5-turbo",
+        LLM_MODEL_NAME: "gpt-4",
         LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
         VECTORDB_DIR: get_vectorDB_file_path(),
