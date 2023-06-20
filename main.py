@@ -20,7 +20,7 @@ def setup_logging():
     c_handler.setFormatter(c_format)
 
     # Create file handler which logs even debug messages
-    f_handler = logging.FileHandler('logfile.log')
+    f_handler = logging.FileHandler('logfile.log', mode="w")
     f_handler.setLevel(logging.INFO)
     f_format = logging.Formatter(FORMAT)
     f_handler.setFormatter(f_format)
