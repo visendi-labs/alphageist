@@ -2,8 +2,16 @@ from alphageist.ui import gui
 from alphageist import errors
 from alphageist import constant
 from dotenv import load_dotenv
+from alphageist.constant import APP_NAME, AUTHOR
+from platformdirs import user_config_dir
 import logging
+import os
 
+def get_log_file_path(ensure_exists: bool = True) -> str:
+    # Use the user_config_dir function to get the directory path
+    log_file_dir = user_config_dir(APP_NAME, AUTHOR, ensure_exists=ensure_exists)
+
+    return os.path.join(log_file_dir, "logfile.log")
 
 def setup_logging():
     FORMAT = "%(asctime)s %(filename)s:%(lineno)s - %(levelname)s - %(message)s"
@@ -20,7 +28,7 @@ def setup_logging():
     c_handler.setFormatter(c_format)
 
     # Create file handler which logs even debug messages
-    f_handler = logging.FileHandler('logfile.log', mode="w")
+    f_handler = logging.FileHandler(get_log_file_path(), mode="w")
     f_handler.setLevel(logging.INFO)
     f_format = logging.Formatter(FORMAT)
     f_handler.setFormatter(f_format)

@@ -62,6 +62,6 @@ app = BUNDLE(
     icon='alphageist/ui/assets/Visendi.icns',
     bundle_identifier=None,
     info_plist={
-        'CFBundleShortVersionString': '0.0.1',
+        'CFBundleShortVersionString': '0.1.2',
     },
 )
