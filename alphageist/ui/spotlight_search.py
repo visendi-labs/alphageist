@@ -259,6 +259,7 @@ class SpotlightSearch(QWidget):
     def set_search_bar_disabled(self, message: Optional[str] = None)->None:
         self.set_search_bar_error_frame(False)
         if message is not None:
+            self.search_bar.setText("")
             self.search_bar.setPlaceholderText(message)
         self.search_bar.setEnabled(False)
         self.setFocus()
