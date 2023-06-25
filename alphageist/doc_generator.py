@@ -1,4 +1,5 @@
 import os 
+import logging
 from typing import Any
 from collections.abc import Iterator
 from langchain.docstore.document import Document
@@ -13,6 +14,9 @@ from langchain.document_loaders.base import BaseLoader
 
 from alphageist.custom_loaders import PPTXLoader
 from alphageist.util import is_temp_file
+from alphageist import constant
+
+logger = logging.getLogger(constant.LOGGER_NAME)
 
 def _get_file_paths(path:str)->Iterator[str]:
     for root, dirs, files in os.walk(path):
@@ -47,19 +51,21 @@ _docu_splitter_by_filetype = {
     ".xls": lambda: RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap =0),
 }
 
-
 def get_docs_from_file(file_path:str)->list[Document]:
     file_ext = _get_file_extension(file_path)
     if is_temp_file(file_path):
         return [] # Skip temporary files
     if not file_ext in _loader_by_filetype:
         return [] # Unsupported file
-    print(f"Loading {file_path}")
-    docs = _loader_by_filetype[file_ext](file_path).load()
+    logger.info(f"Loading {file_path}")
+    try:
+        docs = _loader_by_filetype[file_ext](file_path).load()
+    except OSError as e:
+        logger.exception(f"OSError encountered while loading file {file_path}: {e}")
+        return []  # return an empty list if the file is damaged
     subdocs = _docu_splitter_by_filetype[file_ext]().split_documents(docs)
     return subdocs
-    
- 
+
 def get_docs_from_path(path)->list[Document]:
     docs = []
     for file_path in _get_file_paths(path):
