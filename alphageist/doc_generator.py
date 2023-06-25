@@ -3,10 +3,10 @@ import logging
 from typing import Any
 from collections.abc import Iterator
 from langchain.docstore.document import Document
-from langchain.document_loaders import TextLoader
 from langchain.document_loaders import PyPDFLoader
 from langchain.document_loaders import PythonLoader
 from langchain.document_loaders import Docx2txtLoader
+from langchain.document_loaders import TextLoader
 from langchain.document_loaders import UnstructuredExcelLoader
 from langchain.document_loaders.csv_loader import CSVLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
@@ -29,11 +29,11 @@ def _get_file_extension(file_name: str) -> str:
     return file_extension
 
 _loader_by_filetype:dict[str,Any] = {
-    ".txt": lambda file_path: TextLoader(file_path, encoding='utf-8'),
+    ".txt": lambda file_path: TextLoader(file_path, autodetect_encoding=True),
     ".pdf": PyPDFLoader,
     ".csv": lambda file_path: CSVLoader(file_path, csv_args={ 'delimiter': ',' }),
     ".py": PythonLoader,
-    ".go": TextLoader,
+    ".go": lambda file_path: TextLoader(file_path, autodetect_encoding=True),
     ".pptx": PPTXLoader,
     ".docx": Docx2txtLoader,
     ".xlsx": UnstructuredExcelLoader,

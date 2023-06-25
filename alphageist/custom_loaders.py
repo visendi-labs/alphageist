@@ -2,6 +2,7 @@ from pptx import Presentation # type: ignore
 from typing import List, Optional
 from langchain.docstore.document import Document
 from langchain.document_loaders.base import BaseLoader
+from langchain.document_loaders import TextLoader
 
 class PPTXLoader(BaseLoader):
     """Load pptx files."""
@@ -25,7 +26,8 @@ class PPTXLoader(BaseLoader):
                 metadata = {"source": f"{self.file_path}"} 
                 docs.append(Document(page_content=text, metadata=metadata))
         return docs
-    
+
+
 if __name__ == "__main__":
     file_path = 'test/data/Tesla Q1 2023 Financials Summary.pptx'
     loader = PPTXLoader(file_path)
