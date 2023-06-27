@@ -18,7 +18,7 @@ from alphageist.doc_generator import get_docs_from_file
     (path.join("test", "data", "file_for_testing.wbk"), 0),
     (path.join("test", "data", "damaged.pdf"), 0), # Damaged PDF
 ])
-def test_get_docs_from_file(filepath:int, expected_n_docs:int):
+def test_get_docs_from_file(filepath:str, expected_n_docs:int):
     res = get_docs_from_file(filepath)
     assert len(res) == expected_n_docs
 
