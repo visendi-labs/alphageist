@@ -60,8 +60,8 @@ def get_docs_from_file(file_path:str)->list[Document]:
     logger.info(f"Loading {file_path}")
     try:
         docs = _loader_by_filetype[file_ext](file_path).load()
-    except OSError as e:
-        logger.exception(f"OSError encountered while loading file {file_path}: {e}")
+    except Exception as e:
+        logger.exception(f"Exception encountered while loading file {file_path}: {e}")
         return []  # return an empty list if the file is damaged
     subdocs = _docu_splitter_by_filetype[file_ext]().split_documents(docs)
     return subdocs

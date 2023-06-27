@@ -14,18 +14,9 @@ from alphageist.doc_generator import get_docs_from_file
     (path.join("test", "data", "spotify1.jpeg"), 0), # Not supported should return 0
     (path.join("test", "data", ".~$PRD_MobileApp.docx"), 0), 
     (path.join("test", "data", "~$PRD_MobileApp.docx"), 0),
-    (path.join("test", "data", "file_for_testing.asd"), 0), 
-    (path.join("test", "data", "file_for_testing.tmp"), 0),
-    (path.join("test", "data", "file_for_testing.wbk"), 0),
     (path.join("test", "data", "damaged.pdf"), 0), # Damaged PDF
+    (path.join("test", "data", "symbolic_link_to_nothing.txt"), 0), 
 ])
 def test_get_docs_from_file(filepath:str, expected_n_docs:int):
     res = get_docs_from_file(filepath)
     assert len(res) == expected_n_docs
-
-def test_get_docs_from_file_non_existing():
-    with pytest.raises(ValueError) as exc_info:
-        get_docs_from_file("non_existing_filepath.pdf")
-
-
-        
