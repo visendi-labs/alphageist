@@ -16,7 +16,7 @@ from alphageist.doc_generator import get_docs_from_file
     (path.join("test", "data", "file_for_testing.asd"), 0), 
     (path.join("test", "data", "file_for_testing.tmp"), 0),
     (path.join("test", "data", "file_for_testing.wbk"), 0),
-    (path.join("test", "data", "Encyclopedia_of_Automotive_Engineering.pdf"), 0),
+    (path.join("test", "data", "damaged.pdf"), 0), # Damaged PDF
 ])
 def test_get_docs_from_file(filepath:int, expected_n_docs:int):
     res = get_docs_from_file(filepath)
