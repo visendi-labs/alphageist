@@ -1,0 +1,497 @@
+﻿
+[Header]
+ProjectFileVersion = 1.1
+[General]
+Program name = Visendi Search
+Program version = <<version>>
+Windows XP = 0
+Windows Server 2003 = 0
+Windows Vista = 0
+Windows Server 2008 = 0
+Windows 7 = 1
+Windows 8 = 1
+Windows 10 = 1
+Windows Server 2016 = 0
+Windows Server 2019 = 0
+Windows Server 2022 = 0
+Windows 11 = 1
+DoNotCheckOS = 0
+Company name = Visendi AB
+Website = https://visendi.ai
+SFA = 0
+DFA = 0
+Comp = 1
+[Graphics]
+Wizard image = <main>
+Header image = <main>
+Show Label = 1
+VisualStylesEnabled = 1
+[Files]
+Installation path = <ProgramFiles>\<Company>\<AppName>\
+Autcip = 1
+[Uninstall]
+Vwau = 0
+Website = https://
+Include uninstaller = 1
+Uninstaller filename = Uninstall
+UseCustomDisplayIcon = 0
+CustomDisplayIcon = <InstallPath>\
+[Licence]
+Licence dialog = 0
+[Finish]
+Sart program = 0
+Reboot computer = 0
+Program = <InstallPath>\
+ProgramArguments = 
+[Shortcuts]
+Allowtc = 0
+Shortcut path = <Company>\<AppName>\
+[Serialoptions]
+Allows = 0
+Number = 1000
+Mask = #####-#####-#####-#####
+[SplashScreen]
+Image = 
+Sound = 
+Time = 2
+PlaySound = 0
+Allow = 0
+[Build]
+File = C:\Projects\alphageist\dist\visendi_search_<<version>>_installer.exe
+SetupIconPath = ..\icons\ancient.ico
+UninstallIconPath = ..\icons\ancient.ico
+CompressionMethod = 0
+CompressionLevel = 2
+[Updater]
+Allow = 0
+1 = <AppName>
+2 = <AppVersion>
+3 = http://
+4 = http://
+5 = http://
+6 = Update
+Language = 0
+RunProg = 
+RunProgs = 0
+Execdlls = 0
+[Languages]
+[Files/Dirs]
+C:\Projects\alphageist\dist\Visendi Search\aiohttp\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\alphageist\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\attrs-23.1.0.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\certifi\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\charset_normalizer\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\clickhouse_connect\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\clickhouse_connect-0.5.24.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\Crypto\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\cryptography\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\cryptography-41.0.1.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\docx\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\frozenlist\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\greenlet\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\langchain\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\lxml\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\lz4\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\lz4-4.3.2.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\magic\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\Markdown-3.4.3.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\markupsafe\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\multidict\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\nltk\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\numexpr\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\numpy\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\pandas\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\pdfminer\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\PIL\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\pydantic\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\PyQt6\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\pytz\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\regex\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\scipy\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\scipy.libs\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\sentencepiece\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\sklearn\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\sqlalchemy\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\tcl\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\tcl8\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\tiktoken\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\tk\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\tokenizers\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\wheel-0.40.0.dist-info\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\wrapt\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\yaml\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\yarl\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\zstandard\
+N/A
+[Folder]
+C:\Projects\alphageist\dist\Visendi Search\_asyncio.pyd
+63.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_bz2.pyd
+82.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_cffi_backend.cp311-win_amd64.pyd
+177.5 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_ctypes.pyd
+120.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_decimal.pyd
+247.3 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_elementtree.pyd
+125.3 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_hashlib.pyd
+63.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_lzma.pyd
+155.3 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_multiprocessing.pyd
+33.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_overlapped.pyd
+49.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_queue.pyd
+31.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_socket.pyd
+77.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_sqlite3.pyd
+117.3 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_ssl.pyd
+157.3 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_tkinter.pyd
+62.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\_uuid.pyd
+24.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-console-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-datetime-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-debug-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-errorhandling-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-file-l1-1-0.dll
+14.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-file-l1-2-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-file-l2-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-handle-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-heap-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-interlocked-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-libraryloader-l1-1-0.dll
+12.6 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-localization-l1-2-0.dll
+13.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-memory-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-namedpipe-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-processenvironment-l1-1-0.dll
+12.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-processthreads-l1-1-0.dll
+14.1 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-processthreads-l1-1-1.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-profile-l1-1-0.dll
+10.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-rtlsupport-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-string-l1-1-0.dll
+11.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-synch-l1-1-0.dll
+13.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-synch-l1-2-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-sysinfo-l1-1-0.dll
+12.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-timezone-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-core-util-l1-1-0.dll
+11.6 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-conio-l1-1-0.dll
+12.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-convert-l1-1-0.dll
+15.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-environment-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-filesystem-l1-1-0.dll
+13.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-heap-l1-1-0.dll
+12.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-locale-l1-1-0.dll
+11.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-math-l1-1-0.dll
+20.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-private-l1-1-0.dll
+62.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-process-l1-1-0.dll
+12.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-runtime-l1-1-0.dll
+15.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-stdio-l1-1-0.dll
+17.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-string-l1-1-0.dll
+18.1 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-time-l1-1-0.dll
+14.2 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\api-ms-win-crt-utility-l1-1-0.dll
+12.1 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\base_library.zip
+1.7 MB
+zip
+C:\Projects\alphageist\dist\Visendi Search\duckdb.cp311-win_amd64.pyd
+27.9 MB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\hnswlib.cp311-win_amd64.pyd
+295 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\libcrypto-1_1.dll
+3.3 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\libffi-8.dll
+38.8 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\libopenblas.FB5AE2TYXYH2IJRDKGDGQ3XBKLKTF43H.gfortran-win_amd64.dll
+34 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\libssl-1_1.dll
+688.3 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\pyexpat.pyd
+194.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\python3.dll
+65.8 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\python311.dll
+5.5 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\select.pyd
+29.8 KB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\sqlite3.dll
+1.4 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\tcl86t.dll
+1.8 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\tk86t.dll
+1.5 MB
+dll
+C:\Projects\alphageist\dist\Visendi Search\ucrtbase.dll
+987.9 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\unicodedata.pyd
+1.1 MB
+pyd
+C:\Projects\alphageist\dist\Visendi Search\VCOMP140.DLL
+187.4 KB
+DLL
+C:\Projects\alphageist\dist\Visendi Search\VCRUNTIME140.dll
+106.8 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\VCRUNTIME140_1.dll
+48.4 KB
+dll
+C:\Projects\alphageist\dist\Visendi Search\Visendi Search.exe
+50.9 MB
+exe
+[Licence_Begin]
+3254
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang2057{\fonttbl{\f0\fnil Arial;}}
+{\*\generator Riched20 10.0.19041}\viewkind4\uc1 
+\pard\b\f0\fs20 Terms of Use: Visendi Search\b0\par
+\par
+1. Acceptance of Terms\par
+By downloading, installing, or using the Visendi Search ("Software"), which is owned and provided by Visendi AB ("Company"), you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not download, install, or use the Software.\par
+\par
+2. License\par
+Subject to your compliance with these Terms, the Company grants you a limited, non-exclusive, non-transferable license to download, install and use the Software on a device that you own or control.\par
+\par
+3. Restrictions\par
+You agree not to, and will not permit others to license, sell, rent, lease, assign, distribute, transmit, host, outsource, disclose, or otherwise commercially exploit the Software or make the Software available to any third party. You agree not to reverse-engineer or decompile the Software, or attempt to do so, or assist anyone else to do so.\par
+\par
+4. Privacy & Data Usage\par
+The Software processes and stores information locally on your device. The information processed and stored includes, but is not limited to, data from selected folders. When you use the Software to ask questions or make searches, this data is sent to OpenAI via its API to generate responses. As of the date of these Terms, OpenAI retains this data for 30 days but does not use it to improve its models. This information is not shared with other third parties, including the Company. For more information, refer to our Privacy Policy.\par
+\par
+5. Intellectual Property\par
+The Software, all contents, and all intellectual property rights therein, including but not limited to any text, graphics, logos, and all related technology (including the AI technology used to power the Software), are the property of the Company or its licensors.\par
+\par
+6. Third-Party Services\par
+The Software uses third-party services, including OpenAI GPT-3.5 or GPT-4.0, to create the embeddings in the vector database and to formulate responses to user queries. The Company is not responsible for any issues arising from the use of these third-party services.\par
+\par
+7. Limitation of Liability\par
+In no event will the Company be liable for any indirect, incidental, special, consequential or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, good-will, or other intangible losses resulting from your access to or use of or inability to access or use the Software.\par
+\par
+8. Changes to Terms\par
+The Company reserves the right to modify these Terms at any time. If we make changes to these Terms, we will notify you by updating the date of these Terms and/or providing other notifications as required by law.\par
+\par
+9. Governing Law\par
+These Terms will be governed by and construed in accordance with the laws of the jurisdiction where the Company is established, without regard to its conflict of laws principles.\par
+\par
+10. Contact Information\par
+If you have any questions about these Terms, please contact the Company at info@visendi.ai.\par
+}
+ [Licence_End]
+[Registry]
+[Variables]
+[SCs]
+Desktop
+Visendi Search
+<InstallPath>\
+
+<InstallPath>\alphageist\ui\assets\Visendi.ico
+0
+Startmenu
+Visendi Search
+<InstallPath>\
+
+<InstallPath>\alphageist\ui\assets\Visendi.ico
+0
+[IFP_End]
+[Serials]
+[Serials_End]
+[Commands]

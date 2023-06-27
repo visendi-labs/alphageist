@@ -7,6 +7,8 @@ from platformdirs import user_config_dir
 import logging
 import os
 
+__version__ = "0.1.3-alpha"
+
 def get_log_file_path(ensure_exists: bool = True) -> str:
     # Use the user_config_dir function to get the directory path
     log_file_dir = user_config_dir(APP_NAME, AUTHOR, ensure_exists=ensure_exists)
@@ -44,5 +46,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-else:
-    raise errors.ForbiddenImportError("this file is not meant to be imported")
