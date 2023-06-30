@@ -15,6 +15,7 @@ from langchain.document_loaders.base import BaseLoader
 from alphageist.custom_loaders import PPTXLoader
 from alphageist.util import is_temp_file
 from alphageist import constant
+from alphageist import util
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
@@ -70,8 +71,10 @@ def get_docs_from_path(path)->list[Document]:
     docs = []
     for file_path in _get_file_paths(path):
         docs.extend(get_docs_from_file(file_path))
+    return _escape_unicode(docs)
+
+def _escape_unicode(docs:list[Document])->list[Document]:
+    docs = docs[:]
+    for doc in docs:
+        doc.page_content = util.string_to_raw_string(doc.page_content)
     return docs
-    
-if __name__ == "__main__":
-   for doc in get_docs_from_path("test/data"):
-       print(doc)

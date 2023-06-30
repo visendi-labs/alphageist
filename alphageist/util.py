@@ -2,10 +2,16 @@ import logging
 import typing
 from pathlib import Path
 import os 
+import codecs
 from alphageist import state as s
 from alphageist import constant
 
+
 logger = logging.getLogger(constant.LOGGER_NAME)
+
+def string_to_raw_string(s: str)->str:
+    return codecs.unicode_escape_encode(s)[0].decode()
+
 
 def path_is_valid_format(path):
     try:
