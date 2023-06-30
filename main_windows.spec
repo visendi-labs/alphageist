@@ -16,7 +16,7 @@ a = Analysis(
         ('C:\\Projects\\alphageist\\venv\\Lib\\site-packages\\langchain\\chains\\llm_summarization_checker\\prompts\\revise_summary.txt', 'langchain/chains/llm_summarization_checker/prompts/'),
         ('C:\\Projects\\alphageist\\alphageist\\ui\\assets\\*', 'alphageist/ui/assets'),
     ],
-    hiddenimports=['tiktoken_ext.openai_public', 'tiktoken_ext'],
+    hiddenimports=['tiktoken_ext.openai_public', 'tiktoken_ext', 'chromadb.telemetry.posthog', 'chromadb.api.local', 'chromadb.db.duckdb'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

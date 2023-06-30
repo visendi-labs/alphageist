@@ -16,7 +16,7 @@ Windows Server 2019 = 0
 Windows Server 2022 = 0
 Windows 11 = 1
 DoNotCheckOS = 0
-Company name = Visendi AB
+Company name = Visendi
 Website = https://visendi.ai
 SFA = 0
 DFA = 0
@@ -39,9 +39,9 @@ CustomDisplayIcon = <InstallPath>\
 [Licence]
 Licence dialog = 0
 [Finish]
-Sart program = 0
+Sart program = 1
 Reboot computer = 0
-Program = <InstallPath>\
+Program = <InstallPath>\Visendi Search.exe
 ProgramArguments = 
 [Shortcuts]
 Allowtc = 0
@@ -481,13 +481,13 @@ If you have any questions about these Terms, please contact the Company at info@
 [SCs]
 Desktop
 Visendi Search
-<InstallPath>\
+<InstallPath>\Visendi Search.exe
 
 <InstallPath>\alphageist\ui\assets\Visendi.ico
 0
 Startmenu
 Visendi Search
-<InstallPath>\
+<InstallPath>\Visendi Search.exe
 
 <InstallPath>\alphageist\ui\assets\Visendi.ico
 0
