@@ -1,4 +1,5 @@
 import os
+import threading
 import shutil
 import re
 import threading
@@ -7,7 +8,7 @@ import platform
 
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize, QUrl
+from PyQt6.QtCore import Qt, QTimer, QPoint,QMetaObject, pyqtSlot, QSize, QUrl
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
@@ -98,12 +99,6 @@ class SpotlightSearch(QWidget):
 
     error_msg: str # Displayed in search bar
     
-    # Signals
-    update_search_results_signal = pyqtSignal(str)
-    setSearchResultVisible_signal = pyqtSignal(bool)
-    adjustWindowSize_signal = pyqtSignal()
-    focus_signal = pyqtSignal()
-
     def __init__(self):
         super().__init__()
         
@@ -120,17 +115,10 @@ class SpotlightSearch(QWidget):
         self.check_focus_timer.timeout.connect(self.check_focus)
         self.check_focus_timer.start(500)
 
-        self.focus_signal.connect(self.setFocusSlot)
-
         self.setFocus()  # Sets focus so the program wont shutdown
 
         # Set up the callback functionality making streaming possible
         self.init_callback()
-
-        # Signals for toggling search result
-        self.setSearchResultVisible_signal.connect(
-            self.setSearchResultsVisible)
-        self.adjustWindowSize_signal.connect(self.adjust_window_size)
 
         self.alphageist = Alphageist()
         self.alphageist.subscribe_to_statechange(self.on_statechange)
@@ -141,23 +129,25 @@ class SpotlightSearch(QWidget):
         self.callback = CustomStreamHandler(
             self.on_llm_new_token, self.on_llm_end)
         self.muted = False
-        self.update_search_results_signal.connect(self.update_search_results)
 
-    @pyqtSlot()
-    def setFocusSlot(self):
-        self.setFocus()
+    @util.force_main_thread()
+    def setFocus(self):
+        super().setFocus()
 
     @pyqtSlot(bool)
+    @util.force_main_thread(bool)
     def setSearchResultsVisible(self, visible: bool):
         self.search_results.setVisible(visible)
 
     @pyqtSlot(str)
+    @util.force_main_thread(str)
     def update_search_results(self, text: str):
         self.search_results.setHtml(RES_WIN_PREFIX + text + RES_WIN_POSTFIX)
         self.search_results.setVisible(True)
         self.adjust_window_size()
 
     def _handle_error_state(self):
+        """This method is called from another thread"""
         exception = self.alphageist.exception
         if isinstance(exception, openai.error.AuthenticationError):
             self.set_search_bar_error_message("Invalid API Key")
@@ -173,7 +163,7 @@ class SpotlightSearch(QWidget):
         else:
             logger.error("Trying to handle error but no exception exist")
 
-    def on_statechange(self, old_state, new_state):
+    def on_statechange(self, old_state:state.State, new_state:state.State):
         if new_state is state.NEW:
             self.set_search_bar_disabled()
             self.alphageist.load_config()
@@ -184,7 +174,7 @@ class SpotlightSearch(QWidget):
             self.set_search_bar_disabled("Loading vectorstore...")
         if new_state is state.STANDBY:
             # Need to force focus if user clicks outside during vectorstore loading
-            self.focus_signal.emit()
+            self.setFocus()
             self.set_search_bar_stand_by()
         if new_state is state.QUERYING:
             self.set_search_bar_disabled()
@@ -197,17 +187,12 @@ class SpotlightSearch(QWidget):
         if token == "OURCES" and self.raw_response[-1] == "S":
             self.muted = True
             self.raw_response.pop()
-            self.update_search_results_signal.emit(''.join(self.raw_response))
+            self.update_search_results(''.join(self.raw_response))
         else:
             self.raw_response.append(token)
         response: str = ''.join(self.raw_response).replace('\n', '<br>')
-
-        self.update_search_results_signal.emit(response)
-        QMetaObject.invokeMethod(self, "update_search_results_signal",
-                                 QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, response))
-
-        self.setSearchResultVisible_signal.emit(True)
-        self.adjustWindowSize_signal.emit()
+        self.update_search_results(response)
+        self.adjust_window_size()
 
     def on_llm_end(self, response: LLMResult, **kwargs) -> None:
         answer = response.generations[0][0].text
@@ -230,12 +215,13 @@ class SpotlightSearch(QWidget):
                 </td>
                 </tr>"""
             search_result_text += "</table>"
-        self.update_search_results_signal.emit(search_result_text)
-        QMetaObject.invokeMethod(self, "update_search_results_signal",
-                                 QtCore.Qt.ConnectionType.QueuedConnection, QtCore.Q_ARG(str, search_result_text))
+
+        self.update_search_results(search_result_text)
         self.muted = False
         self.raw_response = []
 
+    @pyqtSlot(bool)
+    @util.force_main_thread(bool)
     def set_search_bar_error_frame(self, val: bool):
         if val:
             util.change_stylesheet_property(
@@ -244,6 +230,8 @@ class SpotlightSearch(QWidget):
             util.change_stylesheet_property(
                 self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
 
+    @pyqtSlot(str)
+    @util.force_main_thread(str)
     def set_search_bar_error_message(self, message: str)->None:
         self.set_search_bar_error_frame(True)
         self.search_bar.setText("")
@@ -251,11 +239,15 @@ class SpotlightSearch(QWidget):
         self.search_bar.setEnabled(False)
         self.setFocus()
 
+    @pyqtSlot()
+    @util.force_main_thread()
     def set_search_bar_stand_by(self)->None:
         self.set_search_bar_error_frame(False)
         self.search_bar.setPlaceholderText("Search...")
         self.search_bar.setEnabled(True)
 
+    @pyqtSlot(str)
+    @util.force_main_thread()
     def set_search_bar_disabled(self, message: Optional[str] = None)->None:
         self.set_search_bar_error_frame(False)
         if message is not None:
@@ -283,6 +275,7 @@ class SpotlightSearch(QWidget):
         # Add drop shadow effect
         self.add_shadow_effect()
 
+    @util.force_main_thread()
     def set_window_properties(self):
         self.setMinimumSize(600, 100)
         self.setMaximumSize(600, 100)
@@ -347,6 +340,7 @@ class SpotlightSearch(QWidget):
         self.shadow_effect.setOffset(0, 0)
         self.setGraphicsEffect(self.shadow_effect)
 
+    @util.force_main_thread()
     def center(self):
         """
         Centers the main window of the application on the screen.
@@ -362,6 +356,7 @@ class SpotlightSearch(QWidget):
         y = (screen_geometry.height() - window_geometry.height()) / 2
         self.move(int(x), int(y))
 
+    @util.force_main_thread()
     def check_focus(self):
         # Shut down if user start focusing on something else
         if (not self.settings_open and
@@ -431,6 +426,7 @@ class SpotlightSearch(QWidget):
            self.alphageist.on_config_changed() 
 
     @pyqtSlot()
+    @util.force_main_thread()
     def adjust_window_size(self):
         if self.search_results.isVisible():
             self.setMinimumSize(600, 400)

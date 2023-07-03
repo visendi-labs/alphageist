@@ -7,7 +7,7 @@ from platformdirs import user_config_dir
 import logging
 import os
 
-__version__ = "0.1.3-alpha"
+__version__ = "0.1.4-alpha"
 
 def get_log_file_path(ensure_exists: bool = True) -> str:
     # Use the user_config_dir function to get the directory path

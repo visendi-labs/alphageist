@@ -17,7 +17,6 @@ class MissingConfigValueError(Exception):
         super().__init__(f"The following config keys are not assigned a value: {keys}")
         self.keys = keys
 
-
 class MissingConfigError(Exception):
     pass
 class MissingVectorstoreError(Exception):
@@ -27,8 +26,8 @@ class NoSupportedFilesInDirectoryError(Exception):
     def __init__(self, directory):
         super().__init__(f"No supported files found in {directory}")
 
-
 class InvalidStateError(Exception):
     def __init__(self, incorrect_state:State, allowed_states:Set[State]):
         super().__init__(f"This feature is not allowed in current state ({incorrect_state}). " + 
                          f"Allowed states are {', '.join(allowed_states)}")
+

@@ -1,6 +1,10 @@
 import re
 import sys
 import os
+import threading
+import functools
+from alphageist import errors
+from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
 
 def change_stylesheet_property(pyqt_obj, css_property, new_value):
     # Get the current stylesheet
@@ -22,3 +26,17 @@ def resource_path(relative_path):
         relative_path = os.path.join(relative_path)
 
     return os.path.join(base_path, relative_path)
+
+def force_main_thread(*argtypes:type):
+    """A decorator function that forces a method to be called from the main thread"""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if threading.current_thread() != threading.main_thread():
+                QMetaObject.invokeMethod(self, func.__name__, Qt.ConnectionType.QueuedConnection,
+                                         *(Q_ARG(argtype, arg) for argtype, arg in zip(argtypes, args)),
+                                         *(Q_ARG(argtypes[i], kwarg) for i, kwarg in enumerate(kwargs.values())))
+            else:
+                func(self, *args, **kwargs)
+        return wrapper
+    return decorator
