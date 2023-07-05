@@ -199,8 +199,6 @@ class SpotlightSearch(QWidget):
             self.set_search_bar_error_message("Invalid API Key")
         elif isinstance(exception, errors.MissingConfigValueError):
             self.set_search_bar_error_message(f"← Open settings...")
-        elif isinstance(exception, chromadb.errors.NoIndexException):
-            self.set_search_bar_error_message("Index broken")
         elif isinstance(exception, errors.NoSupportedFilesInDirectoryError):
             self.set_search_bar_error_message("No supported files found in the search directory")
         elif isinstance(exception, Exception):
