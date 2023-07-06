@@ -5,8 +5,12 @@ import re
 import threading
 import logging
 import platform
+import itertools
 
-from typing import Optional
+from typing import (
+    Optional,
+    Iterable
+)
 
 from PyQt6.QtCore import Qt, QTimer, QPoint,QMetaObject, pyqtSlot, QSize, QUrl
 from PyQt6 import QtCore
@@ -72,7 +76,49 @@ RES_WIN_PREFIX = f"""
 <body> 
 """
 RES_WIN_POSTFIX = "</body>"
+class SearchBar(QLineEdit):
+    def __init__(self):
+        super().__init__()
+        font = QFont()
+        font.setPointSize(16)  # Set size font of search bar text
+        self.setFont(font)
+        self.setFixedHeight(42)  # Adjust the height of search bar
+        self.setStyleSheet(f"""
+            background-color: {COLOR.OBSIDIAN_SHADOW}; 
+            border: 0px solid {COLOR.GRAPHITE_DUST};
+                        color: {COLOR.WHITE};
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        """)
+        self.timer = QTimer()
 
+    @pyqtSlot(bool)
+    @util.force_main_thread(bool)
+    def set_error_frame(self, val: bool):
+        if val:
+            util.change_stylesheet_property(
+                self, "border", f"2px solid {COLOR.SUNSET_RED}")
+        else:
+            util.change_stylesheet_property(
+                self, "border", f"0px solid {COLOR.SUNSET_RED}")
+
+    @pyqtSlot(str)
+    @util.force_main_thread(str)
+    def setPlaceholderText(self, text:str)->None:
+        """Stop any ongoing dynamic updating of placeholder and then update placeholder text"""
+        self.timer.stop()
+        try:
+            self.timer.timeout.disconnect()
+        except TypeError:
+            pass 
+        super().setPlaceholderText(text)
+
+    @pyqtSlot(list, int)
+    @util.force_main_thread(list, int)
+    def set_alternating_placeholder_text(self, texts:Iterable[str], interval_ms:int)->None:
+        cycler = itertools.cycle(texts)
+        self.timer.timeout.connect(lambda: super(SearchBar,self).setPlaceholderText(next(cycler)))
+        self.timer.start(interval_ms)
 
 class ResultWindow(QTextBrowser):
     def __init__(self, *args, **kwargs):
@@ -171,7 +217,9 @@ class SpotlightSearch(QWidget):
             self.set_search_bar_disabled()
             self.alphageist.start_init_vectorstore()
         if new_state is state.LOADING_VECTORSTORE:
-            self.set_search_bar_disabled("Loading vectorstore...")
+            self.set_search_bar_disabled()
+            self.search_bar.set_alternating_placeholder_text(
+                ["Loading.", "Loading..", "Loading..."], 300)
         if new_state is state.STANDBY:
             # Need to force focus if user clicks outside during vectorstore loading
             self.setFocus()
@@ -220,20 +268,11 @@ class SpotlightSearch(QWidget):
         self.muted = False
         self.raw_response = []
 
-    @pyqtSlot(bool)
-    @util.force_main_thread(bool)
-    def set_search_bar_error_frame(self, val: bool):
-        if val:
-            util.change_stylesheet_property(
-                self.search_bar, "border", f"2px solid {COLOR.SUNSET_RED}")
-        else:
-            util.change_stylesheet_property(
-                self.search_bar, "border", f"0px solid {COLOR.SUNSET_RED}")
-
+    
     @pyqtSlot(str)
     @util.force_main_thread(str)
     def set_search_bar_error_message(self, message: str)->None:
-        self.set_search_bar_error_frame(True)
+        self.search_bar.set_error_frame(True)
         self.search_bar.setText("")
         self.search_bar.setPlaceholderText(message)
         self.search_bar.setEnabled(False)
@@ -242,17 +281,14 @@ class SpotlightSearch(QWidget):
     @pyqtSlot()
     @util.force_main_thread()
     def set_search_bar_stand_by(self)->None:
-        self.set_search_bar_error_frame(False)
+        self.search_bar.set_error_frame(False)
         self.search_bar.setPlaceholderText("Search...")
         self.search_bar.setEnabled(True)
 
     @pyqtSlot(str)
     @util.force_main_thread()
-    def set_search_bar_disabled(self, message: Optional[str] = None)->None:
-        self.set_search_bar_error_frame(False)
-        if message is not None:
-            self.search_bar.setText("")
-            self.search_bar.setPlaceholderText(message)
+    def set_search_bar_disabled(self)->None:
+        self.search_bar.set_error_frame(False)
         self.search_bar.setEnabled(False)
         self.setFocus()
 
@@ -292,9 +328,11 @@ class SpotlightSearch(QWidget):
         # Create logo label and load logo image
         self.create_logo_label()
         search_layout.addWidget(self.logo_label)
-        # Create search bar and set properties
-        self.create_search_bar()
+        # Create search bar
+        self.search_bar = SearchBar()
+        self.search_bar.returnPressed.connect(self.start_search)
         search_layout.addWidget(self.search_bar)
+
         return search_layout
 
     def create_logo_label(self):
@@ -310,25 +348,7 @@ class SpotlightSearch(QWidget):
             self.show_logo_context_menu)
         self.settings_action = QAction("Settings", self)
         self.settings_action.triggered.connect(self.show_settings)
-
-    def create_search_bar(self):
-        self.search_bar = QLineEdit(self)
-        font = QFont()
-        font.setPointSize(16)  # Set size font of search bar text
-        self.search_bar.setFont(font)
-        self.search_bar.setFixedHeight(42)  # Adjust the height of search bar
-        # Set default text in Search bar
-        self.search_bar.setPlaceholderText("Search...")
-        self.search_bar.setStyleSheet(f"""
-            background-color: {COLOR.OBSIDIAN_SHADOW}; 
-            border: 0px solid {COLOR.GRAPHITE_DUST};
-                        color: {COLOR.WHITE};
-            border-top-right-radius: 10px;
-            border-bottom-right-radius: 10px;
-        """)
-
-        self.search_bar.returnPressed.connect(self.start_search)
-
+    
     def create_search_results(self):
         self.search_results = ResultWindow()
         self.search_results.setVisible(False)  # Hide search result initially
