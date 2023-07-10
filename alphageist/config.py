@@ -15,11 +15,12 @@ LLM_TEMPERATURE = "LLM_TEMPERATURE"
 API_KEY_OPEN_AI = "API_KEY_OPEN_AI"
 VECTORDB_DIR = "VECTOR_DB_PATH" # The directory in which the DB is stored
 SEARCH_DIRS = "SEARCH_DIRS"
+LOG_LEVEL = "LOG_LEVEL"
 
 required_keys = {API_KEY_OPEN_AI, SEARCH_DIRS, VECTORDB_DIR}
 class Config(dict):
     state: state.State
-    def assert_has_required_keys(self) -> None:
+    def _assert_has_required_keys(self):
         """Checks that the keys exist and that they have defined values"""
         missing_keys = required_keys - set(self.keys())
         if missing_keys:
@@ -28,6 +29,18 @@ class Config(dict):
         if missing_values:
             raise errors.MissingConfigValueError(missing_values)
 
+    def _assert_valid_values(self):
+        """Checks that keys have valid values"""
+        for key in self.keys():
+            if key == LOG_LEVEL:
+                allowed_values = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+                if not self[key] in allowed_values:
+                    raise errors.ConfigValueError(key, self[key], allowed_values)
+
+    def check(self) -> None:
+        self._assert_has_required_keys()
+        self._assert_valid_values()
+        
 def get_default_config(ensure_exists: bool = True) -> Config:
     # Create a default config file
     DEFAULT_CONFIG = Config({
@@ -35,7 +48,8 @@ def get_default_config(ensure_exists: bool = True) -> Config:
         LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
         VECTORDB_DIR: get_vectorDB_file_path(),
-        SEARCH_DIRS: ""
+        SEARCH_DIRS: "",
+        LOG_LEVEL: "INFO"
     })
     return DEFAULT_CONFIG
 

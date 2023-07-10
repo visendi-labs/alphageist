@@ -66,7 +66,7 @@ def test_all_required_keys_present_with_values():
         cfg.SEARCH_DIRS: 'some_dirs',
     })
     # Should not raise any exception
-    config.assert_has_required_keys()
+    config._assert_has_required_keys()
 
 def test_missing_required_key():
     config = Config({
@@ -75,7 +75,7 @@ def test_missing_required_key():
     })
     # Should raise MissingConfigComponentsError as VECTORDB_DIR is missing
     with pytest.raises(errors.MissingConfigComponentsError):
-        config.assert_has_required_keys()
+        config._assert_has_required_keys()
 
 def test_empty_required_key_value():
     config = Config({
@@ -85,4 +85,18 @@ def test_empty_required_key_value():
     })
     # Should raise MissingConfigValueError as VECTORDB_DIR is empty
     with pytest.raises(errors.MissingConfigValueError):
-        config.assert_has_required_keys()
+        config._assert_has_required_keys()
+
+@pytest.mark.parametrize("key, value", [
+    (cfg.LOG_LEVEL, "not a log level")
+])
+def test_invalid_value(key:str, value:str):
+    config = test_cfg_valid
+    config[key] = value
+    with pytest.raises(errors.ConfigValueError) as e:
+        config.check()
+
+    assert e.value.key == key
+    assert e.value.value == value
+        
+     

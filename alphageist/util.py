@@ -9,6 +9,13 @@ from alphageist import constant
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
+def set_logging_level(level: str):
+    levels = logging._nameToLevel
+    logger = logging.getLogger(constant.LOGGER_NAME)
+    logger.setLevel(levels[level])
+    for handler in logger.handlers:
+        handler.setLevel(levels[level])
+
 def string_to_raw_string(s: str)->str:
     return codecs.unicode_escape_encode(s)[0].decode()
 

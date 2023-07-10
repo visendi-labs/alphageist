@@ -51,16 +51,22 @@ class Alphageist(util.StateSubscriptionMixin):
         self.config = config
 
         try:
-            config.assert_has_required_keys()
-        except (errors.MissingConfigComponentsError, errors.MissingConfigValueError) as e:
+            config.check()
+        except (errors.MissingConfigComponentsError, 
+                errors.MissingConfigValueError,
+                errors.ConfigValueError) as e:
             self.exception = e
             self.state = s.ERROR
         except Exception as e:
             raise e
             self.state = s.ERROR
         else:
+            if cfg.LOG_LEVEL in config:
+                log_lvl = config[cfg.LOG_LEVEL]
+                logger.info(f"Setting loglevel to {log_lvl}")
+                util.set_logging_level(log_lvl)
             self.state = s.CONFIGURED
-
+            
     def start_init_vectorstore(self)->None:
         if self.state is not s.CONFIGURED:
             raise errors.InvalidStateError(self.state, {s.CONFIGURED})

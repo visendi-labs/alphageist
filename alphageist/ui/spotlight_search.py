@@ -199,6 +199,8 @@ class SpotlightSearch(QWidget):
             self.set_search_bar_error_message("Invalid API Key")
         elif isinstance(exception, errors.MissingConfigValueError):
             self.set_search_bar_error_message(f"← Open settings...")
+        elif isinstance(exception, errors.ConfigValueError):
+            self.set_search_bar_error_message(f"Config error: '{exception.value}' is an invalid value for {exception.key}")
         elif isinstance(exception, errors.NoSupportedFilesInDirectoryError):
             self.set_search_bar_error_message("No supported files found in the search directory")
         elif isinstance(exception, Exception):
