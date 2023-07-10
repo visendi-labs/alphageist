@@ -70,7 +70,7 @@ def get_vectorDB_file_path(ensure_exists: bool = True) -> str:
 def save_config(config_file: str, config: dict):
     logger.info(f"Saving config to {config_file}")
     with open(config_file, 'w') as f:
-        f.write(json.dumps(config))
+        f.write(json.dumps(config, indent=4))
 
 def load_config(config_file: str, default_config: Config) -> Config:
     if os.path.exists(config_file):

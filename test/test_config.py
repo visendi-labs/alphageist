@@ -29,7 +29,7 @@ def test_save_settings_config_is_saved():
         save_config(TEST_FILE_PATH, settings)
 
     handle = m()
-    handle.write.assert_called_once_with(json.dumps(settings))
+    handle.write.assert_called_once_with(json.dumps(settings, indent=4))
 
 
 def test_load_settings_config_is_loaded():
