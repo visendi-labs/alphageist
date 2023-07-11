@@ -6,7 +6,9 @@ from platformdirs import user_config_dir
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.chroma import Chroma
+from langchain.vectorstores.qdrant import Qdrant
+import qdrant_client
+
 from langchain import chat_models
 from langchain.vectorstores.base import VectorStore as LangchainVectorstore
 from langchain.callbacks.base import BaseCallbackHandler
@@ -151,16 +153,20 @@ def get_vectorstore_path(config:cfg.Config)->str:
     return vector_db_dir
     
 
-def load_vectorstore(config: cfg.Config) -> Chroma:
+def load_vectorstore(config: cfg.Config) -> LangchainVectorstore:
     """This function loads the vectorstore from the specified directory"""
     embedding = get_embeddings(config)
     vector_db_dir = get_vectorstore_path(config)
     logger.info(f"Loading vectorstore from {vector_db_dir}...")
-    client = Chroma(embedding_function=embedding, persist_directory=vector_db_dir)
-    return client
+    # client = Chroma(embedding_function=embedding, persist_directory=vector_db_dir)
+
+    client = qdrant_client.QdrantClient(path=vector_db_dir, prefer_grpc=True)  
+    qdrant = Qdrant(client=client, collection_name="alphageist", embeddings=embedding)  
+
+    return qdrant
 
 
-def create_vectorstore(config: cfg.Config) -> Chroma:
+def create_vectorstore(config: cfg.Config) -> LangchainVectorstore:
     """This function creates the vectorstore from 
     the documents found in the specified directory"""
     if not cfg.SEARCH_DIRS in config.keys():
@@ -179,7 +185,8 @@ def create_vectorstore(config: cfg.Config) -> Chroma:
 
     emb_f = get_embeddings(config)
     logger.info(f"Creating vectorstore for {len(docs)} documents using {emb_f.__class__.__name__}")
-    client = Chroma.from_documents(docs, embedding=emb_f, persist_directory=vector_db_dir)
-    logger.info(f"Saving vectorstore to {vector_db_dir}")
-    client.persist() # Save DB
+    client = Qdrant.from_documents(docs, 
+                                   embedding=emb_f,
+                                   collection_name="alphageist", 
+                                   path=vector_db_dir)
     return client
