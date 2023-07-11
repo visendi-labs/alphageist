@@ -177,9 +177,9 @@ def create_vectorstore(config: cfg.Config) -> Chroma:
 
     vector_db_dir = get_vectorstore_path(config)
 
-    embedding = get_embeddings(config)
-    logger.info(f"Creating vectorstore...")
-    client = Chroma.from_documents(docs, embedding=embedding, persist_directory=vector_db_dir)
+    emb_f = get_embeddings(config)
+    logger.info(f"Creating vectorstore for {len(docs)} documents using {emb_f.__class__.__name__}")
+    client = Chroma.from_documents(docs, embedding=emb_f, persist_directory=vector_db_dir)
     logger.info(f"Saving vectorstore to {vector_db_dir}")
     client.persist() # Save DB
     return client
