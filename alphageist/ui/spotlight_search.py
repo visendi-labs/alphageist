@@ -342,8 +342,7 @@ class SpotlightSearch(QWidget):
         self.setMaximumSize(600, 100)
         self.center()
         # Remove window frame and background
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint |
-                            Qt.WindowType.WindowStaysOnTopHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
     
