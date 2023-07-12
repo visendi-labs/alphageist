@@ -90,7 +90,35 @@ class SearchBar(QLineEdit):
             border-top-right-radius: 10px;
             border-bottom-right-radius: 10px;
         """)
+        self.__create_close_button__()
         self.timer = QTimer()
+
+    def __create_close_button__(self):
+        self.close_button = QPushButton(self)
+        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "cross.png"))
+        self.close_button.setIcon(
+            QIcon(QPixmap(icon_path))
+        )
+        self.close_button.setStyleSheet(
+            f"""
+            QPushButton{{
+                    background-color: {COLOR.GRAPHITE_DUST};
+                    border-radius: {DESIGN.BUTTON_CLOSE_RADIUS}; 
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.DOVE_GRAY};
+                }}
+            """
+        )
+        self.close_button.setFixedWidth(DESIGN.BUTTON_CLOSE_WIDTH)
+        self.close_button.setFixedHeight(DESIGN.BUTTON_CLOSE_HEIGHT)
+        self.close_button.setCursor(Qt.CursorShape.ArrowCursor)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        close_btn_dx = self.width()-DESIGN.BUTTON_CLOSE_WIDTH-int(self.height()/2-DESIGN.BUTTON_CLOSE_HEIGHT/2)
+        close_btn_dy = int(self.height()/2-DESIGN.BUTTON_CLOSE_HEIGHT/2)
+        self.close_button.move(close_btn_dx, close_btn_dy)
 
     @pyqtSlot(bool)
     @util.force_main_thread(bool)
@@ -317,6 +345,8 @@ class SpotlightSearch(QWidget):
         layout.addWidget(self.search_results)
         # Set the layout for the widget
         self.setLayout(layout)
+        # Add Close button
+        self.search_bar.close_button.clicked.connect(self.close)
         # Add drop shadow effect
         self.add_shadow_effect()
 
@@ -330,6 +360,7 @@ class SpotlightSearch(QWidget):
                             Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
+    
     def create_search_layout(self):
         # Create a horizontal layout for search bar and logo
         search_layout = QHBoxLayout()
