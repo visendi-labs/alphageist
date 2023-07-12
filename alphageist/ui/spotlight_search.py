@@ -184,13 +184,6 @@ class SpotlightSearch(QWidget):
         # Set up the user interface
         self.init_ui()
 
-        # Set up the timer for checking focus
-        self.check_focus_timer = QTimer(self)
-        self.check_focus_timer.timeout.connect(self.check_focus)
-        self.check_focus_timer.start(500)
-
-        self.setFocus()  # Sets focus so the program wont shutdown
-
         # Set up the callback functionality making streaming possible
         self.init_callback()
 
@@ -203,10 +196,6 @@ class SpotlightSearch(QWidget):
         self.callback = CustomStreamHandler(
             self.on_llm_new_token, self.on_llm_end)
         self.muted = False
-
-    @util.force_main_thread()
-    def setFocus(self):
-        super().setFocus()
 
     @pyqtSlot(bool)
     @util.force_main_thread(bool)
@@ -250,7 +239,6 @@ class SpotlightSearch(QWidget):
                 ["Loading.", "Loading..", "Loading..."], 300)
         if new_state is state.STANDBY:
             # Need to force focus if user clicks outside during vectorstore loading
-            self.setFocus()
             self.set_search_bar_stand_by()
         if new_state is state.QUERYING:
             self.set_search_bar_disabled()
@@ -304,7 +292,6 @@ class SpotlightSearch(QWidget):
         self.search_bar.setText("")
         self.search_bar.setPlaceholderText(message)
         self.search_bar.setEnabled(False)
-        self.setFocus()
 
     @pyqtSlot()
     @util.force_main_thread()
@@ -327,7 +314,6 @@ class SpotlightSearch(QWidget):
     def set_search_bar_disabled(self)->None:
         self.search_bar.set_error_frame(False)
         self.search_bar.setEnabled(False)
-        self.setFocus()
 
     def init_ui(self):
         # Set window properties
@@ -416,17 +402,6 @@ class SpotlightSearch(QWidget):
         y = (screen_geometry.height() - window_geometry.height()) / 2
         self.move(int(x), int(y))
 
-    @util.force_main_thread()
-    def check_focus(self):
-        # Shut down if user start focusing on something else
-        if (not self.settings_open and
-            not self.hasFocus() and
-            not self.search_bar.hasFocus() and
-            not self.search_results.hasFocus() and
-            not self.alphageist.state is state.LOADING_VECTORSTORE):
-            self.close()
-
-    
     def start_search(self):
         query_string = self.search_bar.text()
         if not query_string:
