@@ -282,7 +282,16 @@ class SpotlightSearch(QWidget):
     @util.force_main_thread()
     def set_search_bar_stand_by(self)->None:
         self.search_bar.set_error_frame(False)
-        self.search_bar.setPlaceholderText("Search...")
+        self.search_bar.set_alternating_placeholder_text(
+            util.stream_texts_incrementally([
+                "What are our company's core values?", 
+                "What's the efficiency of our GXB5 gearbox?",
+                "Vad har Erik på säljavdelningen för telefonnummer?",
+                "What was our last years net result?",
+                "Who was accountant manager Q3 2009?",
+                "What are our patents?"],
+                repeat_full=50), 
+                30)
         self.search_bar.setEnabled(True)
 
     @pyqtSlot(str)

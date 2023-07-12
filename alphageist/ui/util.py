@@ -3,8 +3,26 @@ import sys
 import os
 import threading
 import functools
+from typing import Iterator
 from alphageist import errors
 from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
+
+def stream_texts_incrementally(sentences:list[str], repeat_full: int = 40) -> Iterator[str]:
+    """Generates an iterator that incrementally increases the sentences. 
+
+    repeat_full defines how many times it should repeat the full sentence before moving on
+
+    For example:
+    input: ['hello how are you?', 'Today is Wednesday']
+    output: 
+    'h' -> 'he' -> 'hel' ... -> 'hello how are you?' -> 'T' ... -> 'Today is Wednesday"
+    
+    """
+    for sentence in sentences:
+        for i in range(1, len(sentence) + 1):
+            yield sentence[:i]
+        for _ in range(repeat_full):
+            yield sentence
 
 def change_stylesheet_property(pyqt_obj, css_property, new_value):
     # Get the current stylesheet
