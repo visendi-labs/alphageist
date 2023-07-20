@@ -1,7 +1,7 @@
 import os
 import threading
 import logging
-import typing
+from typing import Optional
 from platformdirs import user_config_dir
 
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -15,6 +15,7 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 
 from alphageist.doc_generator import get_docs_from_path
+from alphageist.util import allowed_states
 from alphageist import util
 from alphageist import state
 from alphageist import errors
@@ -24,37 +25,68 @@ import alphageist.config as cfg
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
+COLLECTION_NAME = "alphageist"
+
 class VectorStore(util.StateSubscriptionMixin):
     exception: Exception
-    store: LangchainVectorstore
+    store: Qdrant
+    emb: Embeddings
+    _thread: threading.Thread
 
     def __init__(self):
         super().__init__()
         self._state = state.NEW
-        self.reset()
+        self.store = None
+        self._thread = None
+        
+    def is_created(self)->bool:
+        if self.store is None:
+            return False
+        if not COLLECTION_NAME in [c.name for c in self.store.client.get_collections().collections]:
+            return False
+        if not self.store.client.count(COLLECTION_NAME).count > 0:
+            return False
+        return True
 
-    def start_init_vectorstore(self, config):
-        if self.state is not state.NEW:
-            raise errors.InvalidStateError(self.state, {state.NEW})
+    @allowed_states({state.NEW})
+    def start_init_vectorstore(self, config:cfg.Config, emb:Optional[Embeddings]=None):
+        self.emb = get_embeddings(config) if emb is None else emb
+        if self.store is not None: 
+            del self.store
+            self.store = None
+        client = qdrant_client.QdrantClient(path=config[cfg.VECTORDB_DIR], prefer_grpc=True)  
+        self.store = Qdrant(client=client, collection_name=COLLECTION_NAME, embeddings=self.emb)  
 
         self.state = state.LOADING
 
         vector_db_path = config[cfg.VECTORDB_DIR]
-        thread: threading.Thread
 
-        if vectorstore_exists(vector_db_path):
-           thread =  threading.Thread(target=self._load_vectorstore,
-                                      args = (config,))
+        if self.is_created():
+            self.state = state.LOADED
         else:
-            thread = threading.Thread(target=self._create_vectorstore,
-                                      args = (config,))
+            self._thread = threading.Thread(target=self._create_vectorstore, args = (config,))
+            self._thread.daemon = True # Should this really be true?
+            self._thread.start()
 
-        thread.daemon = True
-        thread.start()
+    def _create_vectorstore(self, config: cfg.Config) -> None:
+        search_dir = config[cfg.SEARCH_DIRS]
+        docs = get_docs_from_path(search_dir)
+        if not docs:
+            self.exception = errors.NoSupportedFilesInDirectoryError(search_dir)
+            self.state = state.ERROR 
+            return
 
-    def _create_vectorstore(self, config: cfg.Config):
+        vector_db_dir = config[cfg.VECTORDB_DIR]
+
+        logger.info(f"Creating vectorstore for {len(docs)} documents using {self.emb.__class__.__name__}")
+        del self.store
+        self.store = None
         try:
-            self.store = create_vectorstore(config)
+            self.store = Qdrant.from_documents(docs, 
+                                           embedding=self.emb,
+                                           collection_name=COLLECTION_NAME, 
+                                           path=vector_db_dir)
+  
         except Exception as e:
             logger.exception(f"Unable to create vectorstore: {str(e)}")
             self.exception = e
@@ -63,20 +95,10 @@ class VectorStore(util.StateSubscriptionMixin):
             logger.info("Vectorstore successfully created")
             self.state = state.LOADED
 
-    def _load_vectorstore(self, config: cfg.Config):
-        try:
-            self.store = load_vectorstore(config)
-        except Exception as e:
-            logger.exception(f"Unable to load vectorstore: {str(e)}")
-            self.exception = e
-            self.state = state.ERROR
-        else:
-            self.state = state.LOADED
-
+    @allowed_states({state.LOADED, state.ERROR, state.NEW})
     def reset(self):
-        allowed_states = {state.LOADED, state.ERROR, state.NEW}
-        if self.state not in allowed_states:
-            raise errors.InvalidStateError(self.state, allowed_states)
+        if self.store is not None:
+            self.store.client.delete_collection(collection_name=COLLECTION_NAME)
         self.exception = None
         self.state = state.NEW
 
@@ -98,13 +120,11 @@ class VectorStore(util.StateSubscriptionMixin):
             self.state = state.ERROR
             raise err
 
+    @allowed_states({state.LOADED})
     def query(self, 
              config: cfg.Config, 
              query_string: str, 
              callbacks: list[BaseCallbackHandler] = [] ) -> dict:
-
-        if self.state is not state.LOADED:
-            raise errors.InvalidStateError(self.state, {state.LOADED})
 
         index = self._get_vectorstore_index_wrapper()
         streaming = bool(callbacks)
@@ -123,70 +143,9 @@ class VectorStore(util.StateSubscriptionMixin):
             self.state = state.ERROR
             res = {}
         return res
-        
-
-def vectorstore_exists(persist_directory: str) -> bool:
-    """This function checks if the vectorstore already 
-    exists at the specified directory"""
-    return os.path.exists(persist_directory)
-
+    
 
 def get_embeddings(config: cfg.Config) -> Embeddings:
     """This function returns the proper Embeddings according
     to the config"""
-    if not cfg.API_KEY_OPEN_AI in config.keys():
-        raise errors.MissingConfigComponentsError({cfg.API_KEY_OPEN_AI})
-    
     return OpenAIEmbeddings(openai_api_key=config[cfg.API_KEY_OPEN_AI]) #type: ignore
-
-
-def get_vectorstore_path(config:cfg.Config)->str:
-    """This function returns the path to the vector DB
-     based on the operating system"""
-    if not cfg.VECTORDB_DIR in config.keys():
-        raise errors.MissingConfigComponentsError({cfg.VECTORDB_DIR})
-    vector_db_dir = config[cfg.VECTORDB_DIR]
-    if not vector_db_dir:
-        raise ValueError("No directory provided for persisting db")
-    if not util.path_is_valid_format(vector_db_dir):
-        raise ValueError("{vector_db_dir} is not a valid directory")
-    return vector_db_dir
-    
-
-def load_vectorstore(config: cfg.Config) -> LangchainVectorstore:
-    """This function loads the vectorstore from the specified directory"""
-    embedding = get_embeddings(config)
-    vector_db_dir = get_vectorstore_path(config)
-    logger.info(f"Loading vectorstore from {vector_db_dir}...")
-    # client = Chroma(embedding_function=embedding, persist_directory=vector_db_dir)
-
-    client = qdrant_client.QdrantClient(path=vector_db_dir, prefer_grpc=True)  
-    qdrant = Qdrant(client=client, collection_name="alphageist", embeddings=embedding)  
-
-    return qdrant
-
-
-def create_vectorstore(config: cfg.Config) -> LangchainVectorstore:
-    """This function creates the vectorstore from 
-    the documents found in the specified directory"""
-    if not cfg.SEARCH_DIRS in config.keys():
-        raise errors.MissingConfigComponentsError({cfg.SEARCH_DIRS})
-
-    search_dir = config[cfg.SEARCH_DIRS]
-    if not util.path_is_valid_format(search_dir):
-        raise ValueError(f"{search_dir} is not a valid directory")
-
-    docs = get_docs_from_path(search_dir)
-
-    if not docs:
-        raise errors.NoSupportedFilesInDirectoryError(search_dir)
-
-    vector_db_dir = get_vectorstore_path(config)
-
-    emb_f = get_embeddings(config)
-    logger.info(f"Creating vectorstore for {len(docs)} documents using {emb_f.__class__.__name__}")
-    client = Qdrant.from_documents(docs, 
-                                   embedding=emb_f,
-                                   collection_name="alphageist", 
-                                   path=vector_db_dir)
-    return client

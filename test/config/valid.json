@@ -1,0 +1,8 @@
+{
+    "LLM_MODEL_NAME": "gpt-3.5-turbo",
+    "LLM_TEMPERATURE": 0.0,
+    "API_KEY_OPEN_AI": "sk-fake-key",
+    "VECTOR_DB_PATH": "...",
+    "SEARCH_DIRS": "test/data",
+    "LOG_LEVEL": "DEBUG"
+}

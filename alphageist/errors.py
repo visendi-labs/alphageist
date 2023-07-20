@@ -25,8 +25,8 @@ class MissingVectorstoreError(Exception):
 class ConfigValueError(Exception):
     key: str
     value: str
-    allowed_values: Set[str]
-    def __init__(self, key:str, value:str, allowed_values: Set[str]):
+    allowed_values: str
+    def __init__(self, key:str, value:str, allowed_values: str):
         super().__init__(f"'{value} is not an allowed value for config key {key}. Allowed values are: {allowed_values}")
         self.key = key
         self.value = value
@@ -37,7 +37,11 @@ class NoSupportedFilesInDirectoryError(Exception):
         super().__init__(f"No supported files found in {directory}")
 
 class InvalidStateError(Exception):
+    state: State
+    allowed_states: Set[State]
     def __init__(self, incorrect_state:State, allowed_states:Set[State]):
         super().__init__(f"This feature is not allowed in current state ({incorrect_state}). " + 
                          f"Allowed states are {', '.join(allowed_states)}")
+        self.state = incorrect_state
+        self.allowed_states = allowed_states
 

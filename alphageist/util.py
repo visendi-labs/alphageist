@@ -3,8 +3,10 @@ import typing
 from pathlib import Path
 import os 
 import codecs
+import functools
 from alphageist import state as s
 from alphageist import constant
+from alphageist import errors
 
 
 logger = logging.getLogger(constant.LOGGER_NAME)
@@ -18,15 +20,6 @@ def set_logging_level(level: str):
 
 def string_to_raw_string(s: str)->str:
     return codecs.unicode_escape_encode(s)[0].decode()
-
-
-def path_is_valid_format(path):
-    try:
-        Path(path)
-    except Exception:
-        return False
-    else:
-        return True
 
 def is_temp_file(file_path:str) -> bool:
     """Check if a file might be a temporary file by its prefix."""
@@ -70,3 +63,27 @@ class StateSubscriptionMixin:
                 sub(old_state, new_state)
             except Exception as e:
                 self.handle_subscription_exception()
+
+
+def allowed_states(required_states:typing.Set[s.State]):
+    """
+    Decorator for methods that should only be called when an object is in a specific state.
+
+    Args:
+        required_states (set): The set of states in which the decorated method is allowed to be called.
+
+    Returns:
+        function: The decorated function, which will now include a check to make sure 
+                  that the method is only called when the object is in one of the required states.
+
+    Raises:
+        InvalidStateError: If the object's current state is not in the set of required states.
+    """
+    def actual_decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, *args, **kwargs):
+            if self.state not in required_states:
+                raise errors.InvalidStateError(self.state, required_states)
+            return func(self, *args, **kwargs)
+        return wrapper
+    return actual_decorator

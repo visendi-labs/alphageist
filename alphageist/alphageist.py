@@ -2,14 +2,15 @@ import threading
 import logging
 import os
 import shutil
-import typing
+from pathlib import Path
+from typing import (
+    Optional,
+    Callable
+)
 
 from langchain.callbacks.base import BaseCallbackHandler
-import chromadb # type: ignore
 
 from alphageist import state as s
-from alphageist.vectorstore import vectorstore_exists
-from alphageist.vectorstore import load_vectorstore
 from alphageist.vectorstore import VectorStore
 from alphageist import constant
 from alphageist import query
@@ -20,38 +21,39 @@ from alphageist import callbackhandler
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
-STATE_SUBSCRIPTION_SIGNATURE = typing.Callable[[s.State, s.State], None]
+STATE_SUBSCRIPTION_SIGNATURE = Callable[[s.State, s.State], None]
 
 def get_config()->cfg.Config:
-    cfg_file = cfg.get_config_file_path()
-    return cfg.load_config(cfg_file, cfg.get_default_config())
+    cfg_path = cfg.get_config_file_path()
+    return cfg.load_config(cfg_path, cfg.get_default_config())
 
 class Alphageist(util.StateSubscriptionMixin):
     vectorstore: VectorStore
-    exception: Exception
+    exception: Optional[Exception]
     config: cfg.Config
 
     def __init__(self):
         super().__init__()
         self._state = s.NEW
-        self.reset()
+        self.exception = None
+        self.vectorstore = VectorStore()
+        self.vectorstore.subscribe_to_statechange(self.on_vectorstor_state_change)
 
+    @util.allowed_states({s.NEW})
     def load_config(self):
         try:
-            config: cfg.Config = get_config()
+            self.config = get_config()
         except Exception as e:
             logger.exception("Error loading config")
             self.state = s.ERROR
             self.exception = e
             return
 
-        if not isinstance(config, cfg.Config):
-            raise ValueError(f"config has to be of type config.Config not {type(config)}")
-
-        self.config = config
+        if not isinstance(self.config, cfg.Config):
+            raise ValueError(f"config has to be of type config.Config not {type(self.config)}")
 
         try:
-            config.check()
+            self.config.check()
         except (errors.MissingConfigComponentsError, 
                 errors.MissingConfigValueError,
                 errors.ConfigValueError) as e:
@@ -61,28 +63,22 @@ class Alphageist(util.StateSubscriptionMixin):
             raise e
             self.state = s.ERROR
         else:
-            if cfg.LOG_LEVEL in config:
-                log_lvl = config[cfg.LOG_LEVEL]
+            if cfg.LOG_LEVEL in self.config:
+                log_lvl = self.config[cfg.LOG_LEVEL]
                 logger.info(f"Setting loglevel to {log_lvl}")
                 util.set_logging_level(log_lvl)
             self.state = s.CONFIGURED
-            
+
+    @util.allowed_states({s.CONFIGURED})        
     def start_init_vectorstore(self)->None:
-        if self.state is not s.CONFIGURED:
-            raise errors.InvalidStateError(self.state, {s.CONFIGURED})
         self.vectorstore.start_init_vectorstore(self.config)
-        self.state = s.LOADING_VECTORSTORE
 
+    @util.allowed_states({s.LOADING_VECTORSTORE})
     def finish_init_vectorstore(self)->None:
-        if self.state is not s.LOADING_VECTORSTORE:
-            raise errors.InvalidStateError(self.state, {s.LOADING_VECTORSTORE})
-
         self.state = s.STANDBY
 
+    @util.allowed_states({s.STANDBY})
     def start_search(self, query_string:str, callbacks: list[BaseCallbackHandler] = [])->None:
-        if self.state is not s.STANDBY:
-            raise errors.InvalidStateError(self.state, {s.STANDBY}) 
-
         if not query_string:
             raise ValueError("Search string cannot be empty")
 
@@ -104,26 +100,22 @@ class Alphageist(util.StateSubscriptionMixin):
         query_thread.start()
         self.state = s.QUERYING
 
+    @util.allowed_states({s.NEW, s.CONFIGURED, s.STANDBY, s.ERROR})
     def reset(self):
-        allowed_states = {s.NEW, s.CONFIGURED, s.STANDBY, s.ERROR}
-        if not self.state in allowed_states:
-            raise errors.InvalidStateError(self.state, allowed_states)
         self.exception = None
-        self.vectorstore = VectorStore()
-        self.vectorstore.subscribe_to_statechange(self.on_vectorstor_state_change)
+        self.vectorstore.reset()
         self.state = s.NEW
 
     def on_vectorstor_state_change(self, old_state: s.State, new_state: s.State)->None:
         if new_state is s.ERROR:
             self.exception = self.vectorstore.exception
             self.state = s.ERROR
+        elif new_state is s.LOADING:
+            self.state = s.LOADING_VECTORSTORE
         elif new_state is s.LOADED and old_state is s.LOADING:
-            self.state = s.STANDBY
+            self.finish_init_vectorstore()
 
     def on_config_changed(self):
-        # Remove database directory
-        if os.path.exists(self.config[cfg.VECTORDB_DIR]):
-            shutil.rmtree(self.config[cfg.VECTORDB_DIR])
         self.reset() 
 
 

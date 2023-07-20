@@ -17,11 +17,9 @@ from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
-import chromadb # type: ignore
 import openai
 
 from alphageist.query import get_sources_from_answer
-from alphageist.vectorstore import create_vectorstore, vectorstore_exists, load_vectorstore
 from alphageist.callbackhandler import CustomStreamHandler
 from alphageist import state
 from alphageist import errors
@@ -238,7 +236,6 @@ class SpotlightSearch(QWidget):
             self.search_bar.set_alternating_placeholder_text(
                 ["Loading.", "Loading..", "Loading..."], 300)
         if new_state is state.STANDBY:
-            # Need to force focus if user clicks outside during vectorstore loading
             self.set_search_bar_stand_by()
         if new_state is state.QUERYING:
             self.set_search_bar_disabled()

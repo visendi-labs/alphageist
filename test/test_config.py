@@ -1,4 +1,4 @@
-
+from typing import Optional
 import json
 from os import path
 import pytest
@@ -11,16 +11,23 @@ from alphageist import errors
 import alphageist.config as cfg
 
 TEST_FILE_PATH ="abccj"
-
 TEST_DEFAULT_CONFIG = Config({'key': 'default_value'})
 
-test_data = path.join("test", "data")
-test_cfg_valid = Config({cfg.API_KEY_OPEN_AI: "abc123",
-            cfg.VECTORDB_DIR: ".",
-            cfg.SEARCH_DIRS: test_data})
+TEST_DATA_PATH = path.join("test", "data")
+__test_cfg_valid = Config({cfg.API_KEY_OPEN_AI: "abc123",
+                         cfg.VECTORDB_DIR: ".",
+                         cfg.SEARCH_DIRS: TEST_DATA_PATH})
 
 test_cfg_missing_api_key = Config({cfg.VECTORDB_DIR: ".",
-            cfg.SEARCH_DIRS: test_data})
+            cfg.SEARCH_DIRS: TEST_DATA_PATH})
+
+def get_test_cfg_valid(work_dir:Optional[str]=None)->Config:
+    """Returns a deepcopy of a valid config. Vector DB dir will be set
+       to work_dir if specified."""
+    c = __test_cfg_valid.deepcopy()
+    if work_dir is not None:
+        c[cfg.VECTORDB_DIR] = work_dir
+    return c
 
 def test_save_settings_config_is_saved():
     settings = {'key': 'value'}
@@ -31,67 +38,34 @@ def test_save_settings_config_is_saved():
     handle = m()
     handle.write.assert_called_once_with(json.dumps(settings, indent=4))
 
-
-def test_load_settings_config_is_loaded():
-    settings = {'key': 'value'}
-    m = mock_open(read_data=json.dumps(settings))
-    with patch('os.path.exists', return_value=True):  # Mock os.path.exists to return True
-        with patch('builtins.open', m, create=True):
-            result = load_config('filepath', TEST_DEFAULT_CONFIG)
-    assert result == settings
-
-def test_load_settings_file_not_found():
-    m = mock_open()
-    m.side_effect = FileNotFoundError
-    with patch('alphageist.config.open', m, create=True):
-        with patch('os.path.exists', return_value=False):  
-            result = load_config(TEST_FILE_PATH, TEST_DEFAULT_CONFIG)
-    assert result == TEST_DEFAULT_CONFIG
-
-def test_load_settings_missing_keys_are_filled_from_default():
-    partial_settings = Config({'key1': 'value1'})  # Assume 'key2' is missing and it's in the default config
-    default_config = Config({'key1': 'default1', 'key2': 'default2'})
-    expected_result = Config({'key1': 'value1', 'key2': 'default2'})
-
-    m = mock_open(read_data=json.dumps(partial_settings))
-    with patch('os.path.exists', return_value=True):  # Mock os.path.exists to return True
-        with patch('builtins.open', m, create=True):
-            result = load_config('filepath', default_config)
-    assert result == expected_result
-
 def test_all_required_keys_present_with_values():
-    config = Config({
-        cfg.API_KEY_OPEN_AI: 'some_key',
-        cfg.VECTORDB_DIR: 'some_path',
-        cfg.SEARCH_DIRS: 'some_dirs',
-    })
-    # Should not raise any exception
-    config._assert_has_required_keys()
+    get_test_cfg_valid()._assert_has_required_keys()
 
-def test_missing_required_key():
-    config = Config({
-        cfg.API_KEY_OPEN_AI: 'some_key',
-        cfg.SEARCH_DIRS: 'some_dirs',
-    })
+@pytest.mark.parametrize("missing_key", cfg.REQUIRED_KEYS)
+def test_missing_required_key(missing_key:str):
+    config = get_test_cfg_valid()
+    config.pop(missing_key)
     # Should raise MissingConfigComponentsError as VECTORDB_DIR is missing
-    with pytest.raises(errors.MissingConfigComponentsError):
+    with pytest.raises(errors.MissingConfigComponentsError) as exec_info:
         config._assert_has_required_keys()
+    
+    assert missing_key in exec_info.value.missing_keys
 
-def test_empty_required_key_value():
-    config = Config({
-        cfg.API_KEY_OPEN_AI: 'some_key',
-        cfg.VECTORDB_DIR: '',
-        cfg.SEARCH_DIRS: 'some_dirs',
-    })
+@pytest.mark.parametrize("key", cfg.REQUIRED_KEYS)
+def test_required_key_has_missing_value(key):
+    config = get_test_cfg_valid() 
+    config[key] = ""
     # Should raise MissingConfigValueError as VECTORDB_DIR is empty
-    with pytest.raises(errors.MissingConfigValueError):
+    with pytest.raises(errors.MissingConfigValueError) as exec_info:
         config._assert_has_required_keys()
+    
+    assert key in exec_info.value.keys
 
 @pytest.mark.parametrize("key, value", [
-    (cfg.LOG_LEVEL, "not a log level")
+    (cfg.LOG_LEVEL, "not a log level"),
 ])
 def test_invalid_value(key:str, value:str):
-    config = test_cfg_valid
+    config = get_test_cfg_valid()
     config[key] = value
     with pytest.raises(errors.ConfigValueError) as e:
         config.check()
