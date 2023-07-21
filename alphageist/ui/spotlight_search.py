@@ -233,6 +233,7 @@ class SpotlightSearch(QWidget):
             self.alphageist.start_init_vectorstore()
         if new_state is state.LOADING_VECTORSTORE:
             self.set_search_bar_disabled()
+            self.search_bar.setText("")
             self.search_bar.set_alternating_placeholder_text(
                 ["Loading.", "Loading..", "Loading..."], 300)
         if new_state is state.STANDBY:
