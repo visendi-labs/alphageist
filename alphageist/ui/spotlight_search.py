@@ -439,7 +439,7 @@ class SpotlightSearch(QWidget):
         # For Windows
         if platform.system() == 'Windows':
             # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
-            os.startfile(filepath)
+            os.startfile(filepath) # type: ignore
         # For MacOS
         elif platform.system() == 'Darwin':
             # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder

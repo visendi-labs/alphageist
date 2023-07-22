@@ -29,7 +29,7 @@ COLLECTION_NAME = "alphageist"
 
 class VectorStore(util.StateSubscriptionMixin):
     exception: Exception
-    store: Qdrant
+    store: Optional[Qdrant]
     emb: Embeddings
     _thread: threading.Thread
 
