@@ -56,24 +56,7 @@ def _get_image_path_by_filename(filename: str) -> str:
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
 
-RES_WIN_PREFIX = f"""
-<style>
-    body {{
-         font-size: 16px;
-    }}
-    a {{
-        color: white;
-    }}
-    a:hover {{
-        color: #dddddd;
-    }}
-    a:visited {{
-        color: #aaaaaa;
-    }}
-</style>
-<body> 
-"""
-RES_WIN_POSTFIX = "</body>"
+
 class SearchBar(QLineEdit):
     def __init__(self):
         super().__init__()
@@ -147,6 +130,20 @@ class SearchBar(QLineEdit):
         self.timer.start(interval_ms)
 
 class ResultWindow(QTextBrowser):
+    HTML = f"""
+    <style>
+        body {{
+            font-size: {DESIGN.RESULT_WIN_FONT_SIZE};
+            background: {DESIGN.RESULT_WIN_BG_COLOR};
+        }}
+        a {{
+            color: {COLOR.WHITE};
+        }}
+    </style>
+    <body> 
+        %s
+    </body>
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Prevents ext. and local links from opening in search results window
@@ -155,13 +152,15 @@ class ResultWindow(QTextBrowser):
         self.setStyleSheet(
             f"""
             QTextBrowser {{
-            background-color: {COLOR.GRAPHITE_DUST};
-            border: 0px solid {COLOR.GRAPHITE_DUST};
-            border-radius: 10px;
-            color: {COLOR.WHITE};
+                background-color: {DESIGN.RESULT_WIN_BG_COLOR};
+                border: 0px solid {COLOR.GRAPHITE_DUST};
+                border-radius: {DESIGN.ELEMENT_RADIUS};
+                color: {COLOR.WHITE};
             }}
             """
         )
+    def set_text(self, text:str)->None:
+        self.setHtml(self.HTML % text)
 
 
 class SpotlightSearch(QWidget):
@@ -203,7 +202,7 @@ class SpotlightSearch(QWidget):
     @pyqtSlot(str)
     @util.force_main_thread(str)
     def update_search_results(self, text: str):
-        self.search_results.setHtml(RES_WIN_PREFIX + text + RES_WIN_POSTFIX)
+        self.search_results.set_text(text)
         self.search_results.setVisible(True)
         self.adjust_window_size()
 
@@ -268,13 +267,14 @@ class SpotlightSearch(QWidget):
             for source in sources:
                 icon_path = util.resource_path(os.path.join(
                     ASSETS_DIRECTORY, _get_image_path_by_filename(source)))
-                search_result_text += f"""<tr>
-                <td style='padding-right: 4px;'>
-                <img src='{icon_path}' style='vertical-align: middle;' />
-                </td>
-                <td>
-                <a href='{source.strip()}'>{source.strip()}</a>
-                </td>
+                search_result_text += f"""
+                <tr>
+                    <td style='padding-right: 4px;'>
+                        <img src='{icon_path}' style='vertical-align: middle;' />
+                    </td>
+                    <td>
+                        <a href='{source.strip()}'>{source.strip()}</a>
+                    </td>
                 </tr>"""
             search_result_text += "</table>"
 
