@@ -3,9 +3,15 @@ import sys
 import os
 import threading
 import functools
+import platform
 from typing import Iterator
 from alphageist import errors
-from PyQt6.QtCore import QMetaObject, Qt, Q_ARG
+from PyQt6.QtCore import (
+    QMetaObject, 
+    Qt, 
+    Q_ARG,
+    QUrl
+)
 
 def stream_texts_incrementally(sentences:list[str], repeat_full: int = 40) -> Iterator[str]:
     """Generates an iterator that incrementally increases the sentences. 
@@ -27,11 +33,10 @@ def stream_texts_incrementally(sentences:list[str], repeat_full: int = 40) -> It
 def change_stylesheet_property(pyqt_obj, css_property, new_value):
     # Get the current stylesheet
     current_style_sheet = pyqt_obj.styleSheet()
-
+    
     # Create a pattern to find the current border-color
     pattern = re.compile(fr'{css_property}:[\s]*[^;]*;')
     new_style_sheet = re.sub(pattern, f'{css_property}: {new_value};', current_style_sheet)
-
     # Apply the new stylesheet to the QLineEdit
     pyqt_obj.setStyleSheet(new_style_sheet)
 
@@ -58,3 +63,18 @@ def force_main_thread(*argtypes:type):
                 func(self, *args, **kwargs)
         return wrapper
     return decorator
+
+def open_file_link(url: QUrl) -> None:
+        filepath = url.path()
+        # For Windows
+        if platform.system() == 'Windows':
+            # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
+            os.startfile(filepath) # type: ignore
+        # For MacOS
+        elif platform.system() == 'Darwin':
+            # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
+            os.system('open "{}"'.format(filepath))
+        # Unsupported platform
+        else:
+            # Replace with correct error handling process
+            print("Platform not supported.")

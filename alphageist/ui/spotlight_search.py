@@ -12,11 +12,46 @@ from typing import (
     Iterable
 )
 
-from PyQt6.QtCore import Qt, QTimer, QPoint,QMetaObject, pyqtSlot, QSize, QUrl
+from PyQt6.QtCore import (
+    Qt, 
+    QTimer, 
+    QPoint,
+    QMetaObject, 
+    pyqtSlot, 
+    QSize, 
+    QUrl
+)
 from PyQt6 import QtCore
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
-from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon, QCursor
+from PyQt6.QtWidgets import (
+    QApplication, 
+    QWidget, 
+    QFrame,
+    QVBoxLayout, 
+    QHBoxLayout, 
+    QLineEdit, 
+    QTextEdit, 
+    QTextBrowser, 
+    QLabel, 
+    QGraphicsDropShadowEffect,
+    QPushButton, 
+    QLabel, 
+    QInputDialog, 
+    QDialog, 
+    QFormLayout, 
+    QStackedLayout, 
+    QLineEdit, 
+    QMenu, 
+    QFileDialog, 
+    QSpacerItem, 
+    QSizePolicy
+)
+from PyQt6.QtGui import (
+    QFont, 
+    QPixmap, 
+    QAction, 
+    QIcon, 
+    QCursor
+)
 import openai
 
 from alphageist.query import get_sources_from_answer
@@ -55,30 +90,77 @@ def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
-class OptionsButton(QPushButton):
-    def __init__(self, parent=None):
-        super().__init__(parent)
+class SearchBar(QLineEdit):
+    def __init__(self):
+        super().__init__()
+        font = QFont()
+        font.setPointSize(15)  # Set size font of search bar text
+        self.setFont(font)
 
-        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "options_icon.png"))
-        self.setIcon(
-            QIcon(QPixmap(icon_path))
-        )
+        self.setStyleSheet(f"""
+            color: {COLOR.WHITE};
+            border-radius: 0px;
+        """)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+
+        self.timer = QTimer()
+
+    def setDisabled(self, disabled):
+        # Disabling the line edit but not its child button
+        super().setDisabled(disabled)
+    
+    @pyqtSlot(str)
+    @util.force_main_thread(str)
+    def setPlaceholderText(self, text:str)->None:
+        """Stop any ongoing dynamic updating of placeholder and then update placeholder text"""
+        self.timer.stop()
+        try:
+            self.timer.timeout.disconnect()
+        except TypeError:
+            pass 
+        super().setPlaceholderText(text)
+
+    @pyqtSlot(list, int)
+    @util.force_main_thread(list, int)
+    def set_alternating_placeholder_text(self, texts:Iterable[str], interval_ms:int)->None:
+        cycler = itertools.cycle(texts)
+        self.timer.timeout.connect(lambda: super(SearchBar,self).setPlaceholderText(next(cycler)))
+        self.timer.start(interval_ms)
+
+class OptionsButton(QPushButton):
+    def __init__(self):
+        super().__init__()
+        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "options_icon_21x21.png"))
+        self.setIcon(QIcon(QPixmap(icon_path)))
+        self.setFixedSize(DESIGN.BUTTON_OPTN_WIDTH, DESIGN.BUTTON_OPTN_HEIGHT)
         self.setStyleSheet(
             f"""
             QPushButton{{
-                    background-color: {COLOR.OBSIDIAN_SHADOW};
-                    border-radius: {DESIGN.BUTTON_OPTN_RADIUS}; 
-                }}
+                border: 0px solid white;
+                border-radius: {DESIGN.BUTTON_OPTN_RADIUS}; 
+                background-color: {COLOR.OBSIDIAN_SHADOW};
+            }}
             QPushButton:hover{{
-                    background-color: {COLOR.GRAPHITE_DUST};
-                }}
+                background-color: {COLOR.GRAPHITE_DUST};
+            }}
             """
         )
-        self.setFixedWidth(DESIGN.BUTTON_OPTN_WIDTH)
-        self.setFixedHeight(DESIGN.BUTTON_OPTN_HEIGHT)
-        self.setCursor(Qt.CursorShape.ArrowCursor)
-
         self.create_context_menu()
+
+    @pyqtSlot(bool)
+    @util.force_main_thread(bool)
+    def set_error_frame(self, val: bool):
+        if val:
+            util.change_stylesheet_property(
+                self, "border", f"2px solid {COLOR.SUNSET_RED}")
+        else:
+            util.change_stylesheet_property(
+                self, "border", f"0px solid {COLOR.SUNSET_RED}")
+
 
     def create_context_menu(self):
         self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -110,64 +192,59 @@ class OptionsButton(QPushButton):
     def showContextMenu(self, position):
         self.context_menu.exec(self.mapToGlobal(position))
 
-
-class SearchBar(QLineEdit):
+class Logo(QLabel):
     def __init__(self):
         super().__init__()
-        font = QFont()
-        font.setPointSize(16)  # Set size font of search bar text
-        self.setFont(font)
-        self.setFixedHeight(42)  # Adjust the height of search bar
+        logo_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png"))
+        logo_pixmap = QPixmap(logo_path)
+        self.setPixmap(logo_pixmap.scaled(
+            45, 45, Qt.AspectRatioMode.KeepAspectRatio, 
+            Qt.TransformationMode.SmoothTransformation))
+        self.setStyleSheet(f"""
+            background: {COLOR.GRAPHITE_DUST};
+            border-top-left-radius: {DESIGN.ELEMENT_RADIUS};
+            border-bottom-left-radius: {DESIGN.ELEMENT_RADIUS};
+        """)
+
+class SearchBarContainer(QFrame):
+    """Contains searchbar and options button"""
+    def __init__(self):
+        super().__init__()
         self.setStyleSheet(f"""
             background-color: {COLOR.OBSIDIAN_SHADOW}; 
-            border: 0px solid {COLOR.GRAPHITE_DUST};
-                        color: {COLOR.WHITE};
-            border-top-right-radius: 10px;
-            border-bottom-right-radius: 10px;
+            border-top-right-radius: {DESIGN.ELEMENT_RADIUS};
+            border-bottom-right-radius: {DESIGN.ELEMENT_RADIUS};
         """)
-        self.options_button = OptionsButton(self)
-        self.timer = QTimer()
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        close_btn_dx = self.width()-DESIGN.BUTTON_OPTN_WIDTH-int(self.height()/2-DESIGN.BUTTON_OPTN_HEIGHT/2)
-        close_btn_dy = int(self.height()/2-DESIGN.BUTTON_OPTN_HEIGHT/2)
-        self.options_button.move(close_btn_dx, close_btn_dy)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(8, 0, 6, 0) #TODO hot number, should be calculated
+        self.search_bar = SearchBar()
+        self.optn_btn = OptionsButton()
+        layout.addWidget(self.search_bar, 1)
+        layout.addWidget(self.optn_btn, 0)
+        self.setLayout(layout)
 
-    @pyqtSlot(bool)
-    @util.force_main_thread(bool)
-    def set_error_frame(self, val: bool):
-        if val:
-            util.change_stylesheet_property(
-                self, "border", f"2px solid {COLOR.SUNSET_RED}")
-        else:
-            util.change_stylesheet_property(
-                self, "border", f"0px solid {COLOR.SUNSET_RED}")
-
-    @pyqtSlot(str)
-    @util.force_main_thread(str)
-    def setPlaceholderText(self, text:str)->None:
-        """Stop any ongoing dynamic updating of placeholder and then update placeholder text"""
-        self.timer.stop()
-        try:
-            self.timer.timeout.disconnect()
-        except TypeError:
-            pass 
-        super().setPlaceholderText(text)
-
-    @pyqtSlot(list, int)
-    @util.force_main_thread(list, int)
-    def set_alternating_placeholder_text(self, texts:Iterable[str], interval_ms:int)->None:
-        cycler = itertools.cycle(texts)
-        self.timer.timeout.connect(lambda: super(SearchBar,self).setPlaceholderText(next(cycler)))
-        self.timer.start(interval_ms)
+class BarContainer(QFrame):
+    """Contains the logo and the searchbar container"""
+    def __init__(self):
+        super().__init__()
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0,0,0,0)
+        layout.setSpacing(0)
+        self.logo = Logo()
+        self.search_bar_container = SearchBarContainer()
+        layout.addWidget(self.logo)
+        layout.addWidget(self.search_bar_container)
+        self.setLayout(layout)
+        self.setStyleSheet(f"""
+            border: 0px solid white;
+        """)
 
 class ResultWindow(QTextBrowser):
     HTML = f"""
     <style>
         body {{
             font-size: {DESIGN.RESULT_WIN_FONT_SIZE};
-            background: {DESIGN.RESULT_WIN_BG_COLOR};
         }}
         a {{
             color: {COLOR.WHITE};
@@ -179,6 +256,8 @@ class ResultWindow(QTextBrowser):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.setFixedHeight(DESIGN.RESULT_WIN_HEIGHT)
+
         # Prevents ext. and local links from opening in search results window
         self.setOpenExternalLinks(False)
         self.setOpenLinks(False)
@@ -186,23 +265,17 @@ class ResultWindow(QTextBrowser):
             f"""
             QTextBrowser {{
                 background-color: {DESIGN.RESULT_WIN_BG_COLOR};
-                border: 0px solid {COLOR.GRAPHITE_DUST};
+                border: 1 solid {COLOR.STEEL_HAZE};
                 border-radius: {DESIGN.ELEMENT_RADIUS};
                 color: {COLOR.WHITE};
             }}
             """
         )
+        self.document().setDocumentMargin(DESIGN.RESULT_WIN_TEXT_MARGIN)
+
     def set_text(self, text:str)->None:
         self.setHtml(self.HTML % text)
 
-class Logo(QLabel):
-    def __init__(self):
-        super().__init__()
-        logo_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png"))
-        logo_pixmap = QPixmap(logo_path)
-        self.setPixmap(logo_pixmap.scaled(
-            45, 45, Qt.AspectRatioMode.KeepAspectRatio, 
-            Qt.TransformationMode.SmoothTransformation))
     
 class SpotlightSearch(QWidget):
 
@@ -214,21 +287,57 @@ class SpotlightSearch(QWidget):
     def __init__(self):
         super().__init__()
         
-        self.mpos = QPoint()
         self.settings_open = False
         self.settings_dialog = None
         self.error_msg = ""
 
-        # Set up the user interface
         self.init_ui()
-
-        # Set up the callback functionality making streaming possible
+        self.init_action_bindings()
         self.init_callback()
 
         self.alphageist = Alphageist()
         self.alphageist.subscribe_to_statechange(self.on_statechange)
         self.alphageist.load_config()
-    
+
+    def init_ui(self):
+        self.set_window_properties()
+        self.setWindowIcon(QIcon(os.path.join(ASSETS_DIRECTORY, "Visendi.ico")))
+
+        self.setStyleSheet(f"""
+            color: {COLOR.WHITE};
+            font-family: {DESIGN.FONT_FAMILY};
+        """)
+
+        # Set up the user interface
+        layout = QVBoxLayout()
+        self.bar_container = BarContainer()
+        self.create_result_window()
+        layout.addWidget(self.bar_container)
+        layout.addWidget(self.result_window)
+        layout.addStretch()
+        self.setLayout(layout)
+
+        self.add_shadow_effect()
+
+    def set_window_properties(self):
+        self.setFixedWidth(DESIGN.PROGRAM_WIDTH)
+        self.center()
+        # Remove window frame and background
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
+    def init_action_bindings(self):
+        # Options button drop down menu
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.show_settings)
+        close_action = QAction("Exit", self)
+        close_action.triggered.connect(self.close)
+        self.bar_container.search_bar_container.optn_btn.context_menu.addAction(settings_action)
+        self.bar_container.search_bar_container.optn_btn.context_menu.addAction(close_action)
+
+        # Hotkey for start search
+        self.bar_container.search_bar_container.search_bar.returnPressed.connect(self.start_search)
+
     def init_callback(self):
         self.raw_response = []
         self.callback = CustomStreamHandler(
@@ -238,14 +347,13 @@ class SpotlightSearch(QWidget):
     @pyqtSlot(bool)
     @util.force_main_thread(bool)
     def setSearchResultsVisible(self, visible: bool):
-        self.search_results.setVisible(visible)
+        self.result_window.setVisible(visible)
 
     @pyqtSlot(str)
     @util.force_main_thread(str)
     def update_search_results(self, text: str):
-        self.search_results.set_text(text)
-        self.search_results.setVisible(True)
-        self.adjust_window_size()
+        self.result_window.set_text(text)
+        self.result_window.setVisible(True)
 
     def _handle_error_state(self):
         """This method is called from another thread"""
@@ -253,7 +361,7 @@ class SpotlightSearch(QWidget):
         if isinstance(exception, openai.error.AuthenticationError):
             self.set_search_bar_error_message("Invalid API Key")
         elif isinstance(exception, errors.MissingConfigValueError):
-            self.set_search_bar_error_message(f"← Open settings...")
+            self.set_search_bar_error_message(f"Open settings... →")
         elif isinstance(exception, errors.ConfigValueError):
             self.set_search_bar_error_message(f"Config error: '{exception.value}' is an invalid value for {exception.key}")
         elif isinstance(exception, errors.NoSupportedFilesInDirectoryError):
@@ -273,8 +381,8 @@ class SpotlightSearch(QWidget):
             self.alphageist.start_init_vectorstore()
         if new_state is state.LOADING_VECTORSTORE:
             self.set_search_bar_disabled()
-            self.search_bar.setText("")
-            self.search_bar.set_alternating_placeholder_text(
+            self.bar_container.search_bar_container.search_bar.setText("")
+            self.bar_container.search_bar_container.search_bar.set_alternating_placeholder_text(
                 ["Loading.", "Loading..", "Loading..."], 300)
         if new_state is state.STANDBY:
             self.set_search_bar_stand_by()
@@ -294,7 +402,6 @@ class SpotlightSearch(QWidget):
             self.raw_response.append(token)
         response: str = ''.join(self.raw_response).replace('\n', '<br>')
         self.update_search_results(response)
-        self.adjust_window_size()
 
     def on_llm_end(self, response: LLMResult, **kwargs) -> None:
         answer = response.generations[0][0].text
@@ -327,16 +434,16 @@ class SpotlightSearch(QWidget):
     @pyqtSlot(str)
     @util.force_main_thread(str)
     def set_search_bar_error_message(self, message: str)->None:
-        self.search_bar.set_error_frame(True)
-        self.search_bar.setText("")
-        self.search_bar.setPlaceholderText(message)
-        self.search_bar.setEnabled(False)
+        self.bar_container.search_bar_container.optn_btn.set_error_frame(True)
+        self.bar_container.search_bar_container.search_bar.setText("")
+        self.bar_container.search_bar_container.search_bar.setPlaceholderText(message)
+        self.bar_container.search_bar_container.search_bar.setEnabled(False)
 
     @pyqtSlot()
     @util.force_main_thread()
     def set_search_bar_stand_by(self)->None:
-        self.search_bar.set_error_frame(False)
-        self.search_bar.set_alternating_placeholder_text(
+        self.bar_container.search_bar_container.optn_btn.set_error_frame(False)
+        self.bar_container.search_bar_container.search_bar.set_alternating_placeholder_text(
             util.stream_texts_incrementally([
                 "What are our company's core values?", 
                 "What's the efficiency of our GXB5 gearbox?",
@@ -346,72 +453,18 @@ class SpotlightSearch(QWidget):
                 "What are our patents?"],
                 repeat_full=50), 
                 30)
-        self.search_bar.setEnabled(True)
+        self.bar_container.search_bar_container.search_bar.setEnabled(True)
 
     @pyqtSlot(str)
     @util.force_main_thread()
     def set_search_bar_disabled(self)->None:
-        self.search_bar.set_error_frame(False)
-        self.search_bar.setEnabled(False)
-
-    def init_ui(self):
-        # Set window properties
-        self.set_window_properties()
-        self.setWindowIcon(QIcon(os.path.join(ASSETS_DIRECTORY, "Visendi.ico")))
-        self.setStyleSheet(f"""
-            color: {COLOR.WHITE};
-            font-family: {DESIGN.FONT_FAMILY};
-        """)
-        # Set up the user interface
-        layout = QVBoxLayout()
-        layout.addLayout(self.create_search_layout())
-        # Create text browser to display search results
-        self.create_search_results()
-        layout.addWidget(self.search_results)
-        # Set the layout for the widget
-        self.setLayout(layout)
-
-        # Add Options button
-        # TODO: REFACTOR
-        settings_action = QAction("Settings", self)
-        settings_action.triggered.connect(self.show_settings)
-        close_action = QAction("Exit", self)
-        close_action.triggered.connect(self.close)
-        self.search_bar.options_button.context_menu.addAction(settings_action)
-        self.search_bar.options_button.context_menu.addAction(close_action)
-
-        # Add drop shadow effect
-        self.add_shadow_effect()
-
-    @util.force_main_thread()
-    def set_window_properties(self):
-        self.setMinimumSize(600, 100)
-        self.setMaximumSize(600, 100)
-        self.center()
-        # Remove window frame and background
-        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-    def create_search_layout(self):
-        # Create a horizontal layout for search bar and logo
-        search_layout = QHBoxLayout()
-        search_layout.setSpacing(2)  # Set spacing between logo and search bar
-
-        # Create logo label and load logo image
-        self.logo_label = Logo()
-        search_layout.addWidget(self.logo_label)
-
-        # Create search bar
-        self.search_bar = SearchBar()
-        self.search_bar.returnPressed.connect(self.start_search)
-        search_layout.addWidget(self.search_bar)
-
-        return search_layout
-
-    def create_search_results(self):
-        self.search_results = ResultWindow()
-        self.search_results.setVisible(False)  # Hide search result initially
-        self.search_results.anchorClicked.connect(self.open_file_link)
+        self.bar_container.search_bar_container.optn_btn.set_error_frame(False)
+        self.bar_container.search_bar_container.search_bar.setEnabled(False)
+    
+    def create_result_window(self):
+        self.result_window = ResultWindow()
+        self.result_window.setVisible(False)  # Hide search result initially
+        self.result_window.anchorClicked.connect(util.open_file_link)
 
     def add_shadow_effect(self):
         self.shadow_effect = QGraphicsDropShadowEffect()
@@ -436,10 +489,9 @@ class SpotlightSearch(QWidget):
         self.move(int(x), int(y))
 
     def start_search(self):
-        query_string = self.search_bar.text()
+        query_string = self.bar_container.search_bar_container.search_bar.text()
         if not query_string:
-            self.search_results.setVisible(False)
-            self.adjust_window_size()
+            self.result_window.setVisible(False)
             return
         try:
             self.alphageist.start_search(query_string, callbacks=[self.callback])
@@ -465,21 +517,6 @@ class SpotlightSearch(QWidget):
             self.settings_dialog.closed.connect(self.settings_closed)
         self.settings_dialog.show()
 
-    def open_file_link(self, url: QUrl) -> None:
-        filepath = url.path()
-        # For Windows
-        if platform.system() == 'Windows':
-            # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
-            os.startfile(filepath) # type: ignore
-        # For MacOS
-        elif platform.system() == 'Darwin':
-            # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
-            os.system('open "{}"'.format(filepath))
-        # Unsupported platform
-        else:
-            # Replace with correct error handling process
-            print("Platform not supported.")
-
     def settings_opened(self):
         self.settings_open = True
 
@@ -487,16 +524,6 @@ class SpotlightSearch(QWidget):
         self.settings_open = False
         if config_changed:
            self.alphageist.on_config_changed() 
-
-    @pyqtSlot()
-    @util.force_main_thread()
-    def adjust_window_size(self):
-        if self.search_results.isVisible():
-            self.setMinimumSize(600, 400)
-            self.setMaximumSize(600, 400)
-        else:
-            self.setMinimumSize(600, 100)
-            self.setMaximumSize(600, 100)
 
     def mousePressEvent(self, event):
         self.mpos = event.globalPosition().toPoint()

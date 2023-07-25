@@ -60,6 +60,11 @@ class SettingsDialog(QDialog):
         self.title_bar = QWidget()
         self.title_bar.setStyleSheet(
             f"""
+            border-top: 1px solid {COLOR.STEEL_HAZE};
+            border-left: 1px solid {COLOR.STEEL_HAZE};
+            border-right: 1px solid {COLOR.STEEL_HAZE};
+            border-bottom: none;
+
             background-color: {COLOR.OBSIDIAN_SHADOW};
             border-top-right-radius: {DESIGN.ELEMENT_RADIUS};
             border-top-left-radius: {DESIGN.ELEMENT_RADIUS};
@@ -68,6 +73,7 @@ class SettingsDialog(QDialog):
         self.title_label = QLabel('Settings')
         self.title_label.setStyleSheet(
             f"""
+            border: none;
             color: {COLOR.WHITE};
             font-weight: bold;
             """)
@@ -94,6 +100,7 @@ class SettingsDialog(QDialog):
         self.api_key_input.setMinimumSize(450, 0)
         self.api_key_input.setFixedHeight(30)  # Set the height
         self.api_key_input.setStyleSheet(f"""
+                border: none;
                 color: {COLOR.WHITE};
                 background-color: {COLOR.OBSIDIAN_SHADOW};
                 border-radius: {DESIGN.ELEMENT_RADIUS};
@@ -102,7 +109,10 @@ class SettingsDialog(QDialog):
         # Set horisontal layout for API key row
         self.api_key_layout = QHBoxLayout()
         api_key_label = QLabel("API Key")
-        api_key_label.setStyleSheet(f"color: {COLOR.WHITE};")
+        api_key_label.setStyleSheet(f"""
+            border: none;
+            color: {COLOR.WHITE};
+        """)
         self.api_key_layout.addWidget(api_key_label)
         self.api_key_layout.addWidget(self.api_key_input)
 
@@ -112,6 +122,7 @@ class SettingsDialog(QDialog):
         self.folder_container = QWidget(self)
         self.folder_container.setStyleSheet(
             f"""
+            border: none;
             background-color: {COLOR.OBSIDIAN_SHADOW}; 
             border-radius: {DESIGN.BUTTON_RADIUS};
             """
@@ -157,6 +168,7 @@ class SettingsDialog(QDialog):
         self.delete_folder_button.setStyleSheet(
             f"""
             QPushButton{{
+                    border: none;
                     background-color: {COLOR.SUNSET_RED};
                     border-radius: {DESIGN.BUTTON_RADIUS};
                 }}
@@ -180,6 +192,7 @@ class SettingsDialog(QDialog):
         self.edit_folder_button.setStyleSheet(
             f"""
             QPushButton{{
+                    border: none;
                     background-color: {COLOR.COSMIC_SAPPHIRE};
                     border-radius: {DESIGN.BUTTON_RADIUS};
                 }}
@@ -200,6 +213,7 @@ class SettingsDialog(QDialog):
         self.add_folder_button.setStyleSheet(
             f"""
             QPushButton{{
+                    border: none;
                     color: {COLOR.WHITE};
                     background-color: {COLOR.COSMIC_SAPPHIRE};
                     border-radius: {DESIGN.BUTTON_RADIUS};
@@ -223,6 +237,7 @@ class SettingsDialog(QDialog):
         self.save_button.setStyleSheet(
             f"""
             QPushButton {{
+                border: none;
                 border-radius: {DESIGN.BUTTON_RADIUS}; 
                 font-size: {DESIGN.BUTTON_FONT_SIZE};
             }}
@@ -274,7 +289,10 @@ class SettingsDialog(QDialog):
         self.layout.addItem(spacer)
         # Add "Choose Folders" label
         choose_folders_label = QLabel("Choose Folders")
-        choose_folders_label.setStyleSheet(f"color: {COLOR.WHITE};")
+        choose_folders_label.setStyleSheet(f"""
+            border: none;
+            color: {COLOR.WHITE};
+        """)
         self.layout.addWidget(choose_folders_label)
         # Set horisontal layout for "Search Folder container" with edit & delete button
         self.folder_display_layout = QHBoxLayout()
@@ -302,6 +320,11 @@ class SettingsDialog(QDialog):
         self.background_widget = QWidget()
         self.background_widget.setStyleSheet(
             f"""
+            border-top: none;
+            border-left: 1px solid {COLOR.STEEL_HAZE};
+            border-right: 1px solid {COLOR.STEEL_HAZE};
+            border-bottom: 1px solid {COLOR.STEEL_HAZE};
+
             background-color: {COLOR.GRAPHITE_DUST};
             border-bottom-right-radius: {DESIGN.ELEMENT_RADIUS};
             border-bottom-left-radius: {DESIGN.ELEMENT_RADIUS};
