@@ -16,7 +16,7 @@ from PyQt6.QtCore import Qt, QTimer, QPoint,QMetaObject, pyqtSlot, QSize, QUrl
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit, QTextBrowser, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
-from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon
+from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon, QCursor
 import openai
 
 from alphageist.query import get_sources_from_answer
@@ -55,6 +55,60 @@ def _get_image_path_by_filename(filename: str) -> str:
     _, file_extension = os.path.splitext(filename)
     return _icon_by_filetype.get(file_extension, _icon_by_filetype["default"])
 
+class OptionsButton(QPushButton):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "options_icon.png"))
+        self.setIcon(
+            QIcon(QPixmap(icon_path))
+        )
+        self.setStyleSheet(
+            f"""
+            QPushButton{{
+                    background-color: {COLOR.OBSIDIAN_SHADOW};
+                    border-radius: {DESIGN.BUTTON_OPTN_RADIUS}; 
+                }}
+            QPushButton:hover{{
+                    background-color: {COLOR.GRAPHITE_DUST};
+                }}
+            """
+        )
+        self.setFixedWidth(DESIGN.BUTTON_OPTN_WIDTH)
+        self.setFixedHeight(DESIGN.BUTTON_OPTN_HEIGHT)
+        self.setCursor(Qt.CursorShape.ArrowCursor)
+
+        self.create_context_menu()
+
+    def create_context_menu(self):
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.context_menu = QMenu(self)
+        self.context_menu.setStyleSheet(f"""
+            QMenu {{
+                padding: 2px 2px 2px 2px;
+                background-color: {COLOR.OBSIDIAN_SHADOW};
+                border: 1px solid {COLOR.GRAPHITE_DUST};
+                border-radius: 0px;
+            }}
+
+            QMenu::item {{
+                padding: 2px 20px 2px 20px;
+                border-radius: 5px;  
+                color: {COLOR.MOONLIT_SNOW}; 
+            }}
+            
+            QMenu::item:selected {{
+                background-color: {COLOR.GRAPHITE_DUST};
+            }}
+        """)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.showContextMenu(event.pos())
+        super().mousePressEvent(event)
+
+    def showContextMenu(self, position):
+        self.context_menu.exec(self.mapToGlobal(position))
 
 
 class SearchBar(QLineEdit):
@@ -71,35 +125,14 @@ class SearchBar(QLineEdit):
             border-top-right-radius: 10px;
             border-bottom-right-radius: 10px;
         """)
-        self.__create_close_button__()
+        self.options_button = OptionsButton(self)
         self.timer = QTimer()
-
-    def __create_close_button__(self):
-        self.close_button = QPushButton(self)
-        icon_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "cross.png"))
-        self.close_button.setIcon(
-            QIcon(QPixmap(icon_path))
-        )
-        self.close_button.setStyleSheet(
-            f"""
-            QPushButton{{
-                    background-color: {COLOR.GRAPHITE_DUST};
-                    border-radius: {DESIGN.BUTTON_CLOSE_RADIUS}; 
-                }}
-            QPushButton:hover{{
-                    background-color: {COLOR.DOVE_GRAY};
-                }}
-            """
-        )
-        self.close_button.setFixedWidth(DESIGN.BUTTON_CLOSE_WIDTH)
-        self.close_button.setFixedHeight(DESIGN.BUTTON_CLOSE_HEIGHT)
-        self.close_button.setCursor(Qt.CursorShape.ArrowCursor)
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        close_btn_dx = self.width()-DESIGN.BUTTON_CLOSE_WIDTH-int(self.height()/2-DESIGN.BUTTON_CLOSE_HEIGHT/2)
-        close_btn_dy = int(self.height()/2-DESIGN.BUTTON_CLOSE_HEIGHT/2)
-        self.close_button.move(close_btn_dx, close_btn_dy)
+        close_btn_dx = self.width()-DESIGN.BUTTON_OPTN_WIDTH-int(self.height()/2-DESIGN.BUTTON_OPTN_HEIGHT/2)
+        close_btn_dy = int(self.height()/2-DESIGN.BUTTON_OPTN_HEIGHT/2)
+        self.options_button.move(close_btn_dx, close_btn_dy)
 
     @pyqtSlot(bool)
     @util.force_main_thread(bool)
@@ -162,7 +195,15 @@ class ResultWindow(QTextBrowser):
     def set_text(self, text:str)->None:
         self.setHtml(self.HTML % text)
 
-
+class Logo(QLabel):
+    def __init__(self):
+        super().__init__()
+        logo_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png"))
+        logo_pixmap = QPixmap(logo_path)
+        self.setPixmap(logo_pixmap.scaled(
+            45, 45, Qt.AspectRatioMode.KeepAspectRatio, 
+            Qt.TransformationMode.SmoothTransformation))
+    
 class SpotlightSearch(QWidget):
 
     alphageist: Alphageist
@@ -329,8 +370,16 @@ class SpotlightSearch(QWidget):
         layout.addWidget(self.search_results)
         # Set the layout for the widget
         self.setLayout(layout)
-        # Add Close button
-        self.search_bar.close_button.clicked.connect(self.close)
+
+        # Add Options button
+        # TODO: REFACTOR
+        settings_action = QAction("Settings", self)
+        settings_action.triggered.connect(self.show_settings)
+        close_action = QAction("Exit", self)
+        close_action.triggered.connect(self.close)
+        self.search_bar.options_button.context_menu.addAction(settings_action)
+        self.search_bar.options_button.context_menu.addAction(close_action)
+
         # Add drop shadow effect
         self.add_shadow_effect()
 
@@ -343,14 +392,15 @@ class SpotlightSearch(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-    
     def create_search_layout(self):
         # Create a horizontal layout for search bar and logo
         search_layout = QHBoxLayout()
         search_layout.setSpacing(2)  # Set spacing between logo and search bar
+
         # Create logo label and load logo image
-        self.create_logo_label()
+        self.logo_label = Logo()
         search_layout.addWidget(self.logo_label)
+
         # Create search bar
         self.search_bar = SearchBar()
         self.search_bar.returnPressed.connect(self.start_search)
@@ -358,20 +408,6 @@ class SpotlightSearch(QWidget):
 
         return search_layout
 
-    def create_logo_label(self):
-        self.logo_label = QLabel(self)
-        logo_path = util.resource_path(os.path.join(ASSETS_DIRECTORY, "logo2_45x45.png"))
-        logo_pixmap = QPixmap(logo_path)
-        self.logo_label.setPixmap(logo_pixmap.scaled(
-            45, 45, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))  # Adjust logo size
-        # Create context menu for logo_label
-        self.logo_label.setContextMenuPolicy(
-            Qt.ContextMenuPolicy.CustomContextMenu)
-        self.logo_label.customContextMenuRequested.connect(
-            self.show_logo_context_menu)
-        self.settings_action = QAction("Settings", self)
-        self.settings_action.triggered.connect(self.show_settings)
-    
     def create_search_results(self):
         self.search_results = ResultWindow()
         self.search_results.setVisible(False)  # Hide search result initially
@@ -428,11 +464,6 @@ class SpotlightSearch(QWidget):
             self.settings_dialog.opened.connect(self.settings_opened)
             self.settings_dialog.closed.connect(self.settings_closed)
         self.settings_dialog.show()
-
-    def show_logo_context_menu(self, position):
-        context_menu = QMenu(self)
-        context_menu.addAction(self.settings_action)
-        context_menu.exec(self.logo_label.mapToGlobal(position))
 
     def open_file_link(self, url: QUrl) -> None:
         filepath = url.path()
