@@ -13,9 +13,12 @@ from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
 from alphageist.alphageist import Alphageist
 from alphageist.vectorstore import VectorStore
-from alphageist import state
-from alphageist import errors
-from alphageist import config as cfg
+from alphageist import (
+    state,
+    errors,
+    config as cfg,
+    constant
+)
 
 from test.test_vectorstore import MockEmbedding
 import test.test_config as test_cfg
@@ -43,8 +46,17 @@ class MockLMM(SimpleChatModel):
     
 @pytest.fixture
 def tmp_user_config_dir(tmp_path):
-    with patch('alphageist.config.user_config_dir', return_value=str(tmp_path)) as mock:
-        yield tmp_path
+    """Updates the config path to a tmp_path"""
+    # Save the original values
+    original_config_path = constant.CONFIG_PATH
+
+    # Update CONFIG_PATH based on the new APP_DATA_DIR
+    constant.CONFIG_PATH = tmp_path / "config.json"
+
+    yield tmp_path
+
+    # Restore the original values after the test runs
+    constant.CONFIG_PATH = original_config_path
 
 @pytest.fixture
 def tmp_env_factory(tmp_user_config_dir):
@@ -52,8 +64,8 @@ def tmp_env_factory(tmp_user_config_dir):
     If cfg_name is passed as argument it will copy that specific
     config file from test/config folder and it will be named config.cfg.
 
-    If the VECTORDB_DIR is set to something this value will be changed to 
-    the root level of the temporary folder.
+    If the VECTORDB_DIR parameter in the config is set to something this 
+    value will be changed to the root level of the temporary folder.
     """
     def _tmp_env_factory(cfg_name: Optional[str] = None):
         if cfg_name:
@@ -71,9 +83,7 @@ def tmp_env_factory(tmp_user_config_dir):
                 if cfg.VECTORDB_DIR in config:
                     config[cfg.VECTORDB_DIR] = str(tmp_user_config_dir)
                 cfg.save_config(tmp_user_config_dir / 'config.json', config)
-
         yield tmp_user_config_dir
-
     return _tmp_env_factory
 
 def test_first_state_is_new():

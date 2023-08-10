@@ -24,8 +24,7 @@ logger = logging.getLogger(constant.LOGGER_NAME)
 STATE_SUBSCRIPTION_SIGNATURE = Callable[[s.State, s.State], None]
 
 def get_config()->cfg.Config:
-    cfg_path = cfg.get_config_file_path()
-    return cfg.load_config(cfg_path, cfg.get_default_config())
+    return cfg.load_config(constant.CONFIG_PATH, cfg.get_default_config())
 
 class Alphageist(util.StateSubscriptionMixin):
     vectorstore: VectorStore

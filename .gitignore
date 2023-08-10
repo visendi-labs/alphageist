@@ -26,8 +26,12 @@ __pycache__/
 *:Zone.Identifier
 
 # Build folders 
-build
-dist
+temp/**
+build/
+dist/
 
 # Log files
 *.log
+
+# tufup
+.tufup-repo-config

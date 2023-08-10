@@ -14,7 +14,8 @@ a = Analysis(
         ('/Users/jonathansmac/.pyenv/versions/3.11.3/lib/python3.11/site-packages/langchain/chains/llm_summarization_checker/prompts/check_facts.txt', 'langchain/chains/llm_summarization_checker/prompts/'), 
         ('/Users/jonathansmac/.pyenv/versions/3.11.3/lib/python3.11/site-packages/langchain/chains/llm_summarization_checker/prompts/create_facts.txt', 'langchain/chains/llm_summarization_checker/prompts/'), 
         ('/Users/jonathansmac/.pyenv/versions/3.11.3/lib/python3.11/site-packages/langchain/chains/llm_summarization_checker/prompts/revise_summary.txt', 'langchain/chains/llm_summarization_checker/prompts/'),
-        ('/Users/jonathansmac/Python_projects/Alphageist/alphageist/ui/assets/*', 'alphageist/ui/assets')
+        ('/Users/jonathansmac/Python_projects/Alphageist/alphageist/ui/assets/*', 'alphageist/ui/assets'),
+        ('temp/repository/metadata/root.json', '.'),
     ],
     hiddenimports=['tiktoken_ext.openai_public', 'tiktoken_ext'],
     hookspath=[],
@@ -62,6 +63,6 @@ app = BUNDLE(
     icon='alphageist/ui/assets/Visendi.icns',
     bundle_identifier=None,
     info_plist={
-        'CFBundleShortVersionString': '0.1.2',
+        'CFBundleShortVersionString': '1.0.0',
     },
 )

@@ -5,7 +5,6 @@ import json
 import copy
 import os
 from pathlib import Path
-from platformdirs import user_config_dir
 from .constant import APP_NAME, AUTHOR
 from alphageist import state
 from alphageist import errors
@@ -54,27 +53,11 @@ def get_default_config(ensure_exists: bool = True) -> Config:
         LLM_MODEL_NAME: "gpt-4",
         LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
-        VECTORDB_DIR: get_vectorDB_file_path(),
+        VECTORDB_DIR: constant.VECTOR_DB_DIR,
         SEARCH_DIRS: "",
         LOG_LEVEL: "INFO"
     })
     return DEFAULT_CONFIG
-
-def bar():
-    return user_config_dir()
-
-def get_config_file_path(ensure_exists: bool = True) -> Path:
-    # Use the user_config_dir function to get the directory path
-    config_dir = user_config_dir(APP_NAME, AUTHOR, ensure_exists=ensure_exists)
-    # Define your config file path
-    return Path(config_dir) / "config.json"
-
-def get_vectorDB_file_path(ensure_exists: bool = True) -> str:
-    # Use the user_config_dir function to get the directory path
-    vectorDB_dir = user_config_dir(APP_NAME, AUTHOR, ensure_exists=ensure_exists)
-
-    # Define your config file path
-    return os.path.join(vectorDB_dir, "vectorDatabase")
 
 def save_config(config_file: Path, config: Config):
     logger.info(f"Saving config to {config_file}")

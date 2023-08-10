@@ -1,13 +1,17 @@
 import os
 import sys
 import shutil
-from main import __version__
+from alphageist import __version__
+from build_settings import (
+    DIST_DIR,
+    WORK_DIR,
+    INSTALLER_DIR
+)
 
 print(f"version: {__version__}")
 
 TEMPLATE_FILE = "template.ifp"  
-NEW_FILE = os.path.join('dist', f'install_settings_{__version__}.ifp')
-DIST_FOLDER = os.path.join('dist', 'Visendi Search')
+NEW_FILE = INSTALLER_DIR / f'install_settings_{__version__}.ifp'
 PYINSTALLER_SPEC_FILE = "main_windows.spec"
 
 def update_version_number_in_ifp():
@@ -50,7 +54,7 @@ def insert_new_files_and_folders():
 
     new_lines = []
     n_folders, n_files = 0, 0
-    for entry in os.scandir(DIST_FOLDER):
+    for entry in os.scandir(DIST_DIR / "VisendiSearch"):
         if os.path.isfile(entry.path):
             file_size = os.path.getsize(entry.path)/1024
             new_lines.append(f'{os.path.abspath(entry.path)}\n{os.path.splitext(entry.name)[1][1:]}\n{file_size} KB\n')
@@ -72,7 +76,9 @@ def insert_new_files_and_folders():
 
 def main():
     print("Running pyinstaller...")
-    failed = os.system(f"pyinstaller {PYINSTALLER_SPEC_FILE} --noconfirm")
+    cmd = f"pyinstaller {PYINSTALLER_SPEC_FILE} --clean --noconfirm --distpath {DIST_DIR} --workpath {WORK_DIR}"
+    print(cmd)
+    failed = os.system(cmd)
     if failed:
         print("Failed to run pyinstaller")
         sys.exit(1)
@@ -80,6 +86,7 @@ def main():
     print("Building install forge setup file...")
     # Copy the template file
     print(f"Copying {TEMPLATE_FILE} to {NEW_FILE}")
+    os.makedirs(INSTALLER_DIR, exist_ok=True) # Make sure dir exists
     shutil.copy2(TEMPLATE_FILE, NEW_FILE)
 
     update_version_number_in_ifp()

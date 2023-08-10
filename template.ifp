@@ -27,8 +27,8 @@ Header image = <main>
 Show Label = 1
 VisualStylesEnabled = 1
 [Files]
-Installation path = <ProgramFiles>\<Company>\<AppName>\
-Autcip = 1
+Installation path = <ApplicationData>\<Company>\<AppName>\
+Autcip = 0
 [Uninstall]
 Vwau = 0
 Website = https://
@@ -57,7 +57,7 @@ Time = 2
 PlaySound = 0
 Allow = 0
 [Build]
-File = C:\Projects\alphageist\dist\visendi_search_<<version>>_installer.exe
+File = C:\Projects\alphageist\temp\installer\visendi_search_<<version>>_installer.exe
 SetupIconPath = ..\icons\ancient.ico
 UninstallIconPath = ..\icons\ancient.ico
 CompressionMethod = 0

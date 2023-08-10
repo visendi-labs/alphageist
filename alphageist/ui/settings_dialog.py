@@ -7,9 +7,12 @@ from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLi
 from PyQt6.QtWidgets import QPushButton, QLabel, QInputDialog, QDialog, QFormLayout, QStackedLayout, QLineEdit, QMenu, QFileDialog, QSpacerItem, QSizePolicy
 from PyQt6.QtGui import QFont, QPixmap, QAction, QIcon, QMouseEvent
 
-from .constant import ASSETS_DIRECTORY
-from .constant import COLOR
-from .constant import DESIGN
+from alphageist.ui.constant import (
+    ASSETS_DIRECTORY,
+    COLOR,
+    DESIGN,
+)
+from alphageist.constant import CONFIG_PATH
 from alphageist import config as cfg
 from alphageist.ui import util
 
@@ -369,9 +372,7 @@ class SettingsDialog(QDialog):
         self.config[cfg.SEARCH_DIRS] = self.folder_path.text()
 
         # Save the config to file
-        cfg_file_path = cfg.get_config_file_path()
-        cfg.save_config(cfg_file_path, self.config)
-
+        cfg.save_config(CONFIG_PATH, self.config)
 
         # Emit the 'closed' signal and close the window
         self.close(config_changed=True)
