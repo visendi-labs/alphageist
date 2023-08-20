@@ -6,7 +6,10 @@ from dotenv import load_dotenv
 from platformdirs import user_config_dir
 
 from tufup.client import Client # type: ignore
-from tuf.api.exceptions import DownloadHTTPError
+from tuf.api.exceptions import (
+    DownloadHTTPError,
+    ExpiredMetadataError,
+)
 from PyQt6.QtWidgets import QApplication
 
 from alphageist import (
@@ -77,6 +80,9 @@ def update():
     except SystemExit:
         updates = None
         logger.warning(f"Was not able to check for new updates")
+    except ExpiredMetadataError as e:
+        updates = None
+        logger.warning(f"Was not able to update: {str(e)}")
     except Exception as e:
         raise e
 
