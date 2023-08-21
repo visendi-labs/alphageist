@@ -1,7 +1,9 @@
 import logging
 import pathlib
 import shutil
+import threading
 import os
+import sys
 from dotenv import load_dotenv
 from platformdirs import user_config_dir
 
@@ -92,8 +94,7 @@ def update():
         app = QApplication(sys.argv)
         upd_win = ui_update.UpdateWindow()
         upd_win.show()
-
-        client.download_and_apply_update(
+        t = threading.Thread(target = lambda: client.download_and_apply_update(
             # WARNING: Be very careful with purge_dst_dir=True, because this
             # will delete *EVERYTHING* inside the app_install_dir, except
             # paths specified in exclude_from_purge. So, only use
@@ -106,8 +107,9 @@ def update():
             log_file_name='install.log',
             batch_template=CUSTOM_BATCH_TEMPLATE, 
             batch_template_extra_kwargs=dict(app_exe_path=constant.APP_EXE_PATH), 
-        )
-        exit_code = app.exec()
+        ))
+        t.start()
+        sys.exit(app.exec())
 
 def main():
     logger.info(f"Starting Visendi Search version {__version__}")
