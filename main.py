@@ -85,6 +85,10 @@ def update():
     except ExpiredMetadataError as e:
         updates = None
         logger.warning(f"Was not able to update: {str(e)}")
+    except PermissionError as e:
+        updates = None
+        logger.error(f"Was not able to update: {str(e)}")
+
     except Exception as e:
         raise e
 
