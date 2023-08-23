@@ -1,15 +1,18 @@
 from __future__ import annotations
-from typing import Optional
+from typing import (
+    Optional, 
+    Any,
+)
 import logging
 import json
 import copy
-import os
 from pathlib import Path
-from .constant import APP_NAME, AUTHOR
-from alphageist import state
-from alphageist import errors
-from alphageist import constant
-from alphageist import util
+from alphageist import (
+    state,
+    errors,
+    constant,
+    util,
+)
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
@@ -22,7 +25,19 @@ SEARCH_DIRS = "SEARCH_DIRS"
 LOG_LEVEL = "LOG_LEVEL"
 
 REQUIRED_KEYS = {API_KEY_OPEN_AI, SEARCH_DIRS, VECTORDB_DIR}
-class Config(dict):
+class Config(dict[str, Any]):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        for key, value in dict(*args, **kwargs).items():
+            self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        logger.debug(f"Updating config (in memory): {key} -> {value if key != API_KEY_OPEN_AI else 'sk-***'}")
+        # Convert Paths to string in order to avoid json serialization problem on some win systems
+        if isinstance(value, Path):
+            value = str(value)
+        super().__setitem__(key, value)
+        
     def _assert_has_required_keys(self):
         """Checks that the keys exist and that they have defined values"""
         missing_keys = REQUIRED_KEYS - set(self.keys())
@@ -47,13 +62,14 @@ class Config(dict):
     def deepcopy(self)->Config:
         return Config(copy.deepcopy(self))
 
+
 def get_default_config(ensure_exists: bool = True) -> Config:
     # Create a default config file
     DEFAULT_CONFIG = Config({
         LLM_MODEL_NAME: "gpt-4",
         LLM_TEMPERATURE: 0.0,
         API_KEY_OPEN_AI: "",
-        VECTORDB_DIR: constant.VECTOR_DB_DIR,
+        VECTORDB_DIR: str(constant.VECTOR_DB_DIR),
         SEARCH_DIRS: "",
         LOG_LEVEL: "INFO"
     })
@@ -61,8 +77,14 @@ def get_default_config(ensure_exists: bool = True) -> Config:
 
 def save_config(config_file: Path, config: Config):
     logger.info(f"Saving config to {config_file}")
-    with open(config_file, 'w') as f:
-        f.write(json.dumps(config, indent=4))
+    try:
+        with open(config_file, 'w') as f:
+            f.write(json.dumps(config, indent=4))
+    except Exception as e:
+        logger.exception("Was not able to save config")
+        raise e
+    else:
+        logger.debug("Config saved successfully")
 
 def load_config(config_file: Path, default_config:Optional[Config] = None) -> Config:
     if config_file.exists():

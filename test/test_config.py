@@ -1,6 +1,6 @@
 from typing import Optional
 import json
-from os import path
+from pathlib import Path
 import pytest
 from unittest.mock import mock_open, patch
 
@@ -10,10 +10,10 @@ from alphageist.config import Config
 from alphageist import errors
 import alphageist.config as cfg
 
-TEST_FILE_PATH ="abccj"
+TEST_FILE_PATH = Path("abccj")
 TEST_DEFAULT_CONFIG = Config({'key': 'default_value'})
 
-TEST_DATA_PATH = path.join("test", "data")
+TEST_DATA_PATH = Path("test") / "data"
 __test_cfg_valid = Config({cfg.API_KEY_OPEN_AI: "abc123",
                          cfg.VECTORDB_DIR: ".",
                          cfg.SEARCH_DIRS: TEST_DATA_PATH})

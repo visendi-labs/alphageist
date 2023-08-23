@@ -1,4 +1,4 @@
-
+import logging
 import os
 
 from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
@@ -12,10 +12,15 @@ from alphageist.ui.constant import (
     COLOR,
     DESIGN,
 )
-from alphageist.constant import CONFIG_PATH
+from alphageist.constant import (
+    CONFIG_PATH,
+    LOGGER_NAME,
+)
 from alphageist import config as cfg
 from alphageist.ui import util
 
+
+logger = logging.getLogger(LOGGER_NAME)
 
 class SettingsDialog(QDialog):
     # Connected to focus check of Settings window
@@ -350,7 +355,6 @@ class SettingsDialog(QDialog):
             self.folder_path.text() != self.config[cfg.SEARCH_DIRS])
 
     def update_save_button_state(self):
-
         # Update state on the "Save button" if user has made any changes in the Settings window
         if self.settings_has_changed:
             self.save_button.setEnabled(True)
@@ -366,7 +370,7 @@ class SettingsDialog(QDialog):
         self.init_saved_folder_path()
 
     def save_and_close(self):
-        
+        logger.debug("Save and close called") 
         # Update the config object
         self.config[cfg.API_KEY_OPEN_AI] = self.api_key_input.text().strip()
         self.config[cfg.SEARCH_DIRS] = self.folder_path.text()
