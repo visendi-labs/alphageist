@@ -52,7 +52,7 @@ class ProgressBar(QProgressBar):
     def __init__(self):
         super().__init__()
         self.setGeometry(50, 100, 250, 30)
-        self.setValue(66)
+        self.setValue(0)
 
 class UpdateWindow(QWidget):
     def __init__(self):
@@ -60,6 +60,7 @@ class UpdateWindow(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setFixedWidth(400)
         self.setStyleSheet(f"""
         color: {COLOR.MOONLIT_SNOW};
@@ -77,9 +78,17 @@ class UpdateWindow(QWidget):
         layout.addWidget(self.label)
         layout.addWidget(self.prg_bar)
         self.setLayout(layout)
-
+    
+    @pyqtSlot(int,int)
+    @util.force_main_thread(int, int)
     def progress_hook(self, bytes_downloaded: int, bytes_expected: int):
         progress_percent = bytes_downloaded / bytes_expected * 100
         self.prg_bar.setValue(int(progress_percent))
 
+        if progress_percent >= 100:
+            self.label.setText("Restarting...")
+            QTimer.singleShot(1000, self.exit_application)
+
+    def exit_application(self):
+        QApplication.instance().quit()
 
