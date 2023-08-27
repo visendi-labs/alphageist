@@ -228,6 +228,7 @@ class BarContainer(QFrame):
     """Contains the logo and the searchbar container"""
     def __init__(self):
         super().__init__()
+        self.setFixedHeight(DESIGN.SEARCH_BAR_HEIGHT)
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         layout.setSpacing(0)

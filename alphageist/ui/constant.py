@@ -22,6 +22,7 @@ class COLOR:
 class DESIGN:
 
     PROGRAM_WIDTH = 600
+    SEARCH_BAR_HEIGHT = 45
 
     ELEMENT_RADIUS = "10px"
 
