@@ -1,25 +1,37 @@
 import os 
 import logging
-from typing import Any
+from typing import (
+    Any,
+    Optional
+)
 from collections.abc import Iterator
+
+from pathlib import Path
+
 from langchain.docstore.document import Document
-from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import PythonLoader
-from langchain.document_loaders import Docx2txtLoader
-from langchain.document_loaders import TextLoader
-from langchain.document_loaders import UnstructuredExcelLoader
-from langchain.document_loaders.csv_loader import CSVLoader
+from langchain.document_loaders import (
+    PyPDFLoader,
+    PythonLoader,
+    Docx2txtLoader,
+    TextLoader,
+    UnstructuredExcelLoader,
+    CSVLoader
+)
 from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
 from langchain.document_loaders.base import BaseLoader
 
 from alphageist.custom_loaders import PPTXLoader
-from alphageist.util import is_temp_file
+from alphageist.util import (
+    is_temp_file,
+    string_to_raw_string,
+    LoadingContext
+)
 from alphageist import constant
-from alphageist import util
+from alphageist.errors import LoadingCancelled
 
 logger = logging.getLogger(constant.LOGGER_NAME)
 
-def _get_file_paths(path:str)->Iterator[str]:
+def _get_file_paths(path:Path)->Iterator[str]:
     for root, dirs, files in os.walk(path):
         for file in files:
             file_path = os.path.join(root, file)
@@ -67,14 +79,23 @@ def get_docs_from_file(file_path:str)->list[Document]:
     subdocs = _docu_splitter_by_filetype[file_ext]().split_documents(docs)
     return subdocs
 
-def get_docs_from_path(path)->list[Document]:
+def get_docs_from_path(path, ctx:Optional[LoadingContext])->list[Document]:
     docs = []
+    if ctx is not None:
+        ctx.total_files = sum(1 for _ in _get_file_paths(path))
+    files_loaded = -1
+
     for file_path in _get_file_paths(path):
+        if ctx is not None:
+            if ctx.is_cancelled():
+                raise LoadingCancelled
+            ctx.current_file = file_path
+            ctx.files_loaded += 1
         docs.extend(get_docs_from_file(file_path))
     return _escape_unicode(docs)
 
 def _escape_unicode(docs:list[Document])->list[Document]:
     docs = docs[:]
     for doc in docs:
-        doc.page_content = util.string_to_raw_string(doc.page_content)
+        doc.page_content = string_to_raw_string(doc.page_content)
     return docs

@@ -1,4 +1,5 @@
 import logging
+import threading
 import typing
 from pathlib import Path
 import os 
@@ -10,6 +11,33 @@ from alphageist import errors
 
 
 logger = logging.getLogger(constant.LOGGER_NAME)
+class LoadingContext:
+    _lock: threading.Lock
+    total_files: typing.Optional[int]
+    current_file: typing.Optional[str]
+    cancel_event: threading.Event
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.total_files = 1
+        self.files_loaded = 0
+        self.current_file = None
+        self.cancel_event = threading.Event()
+
+    @property
+    def files_loaded(self) -> int:
+        with self._lock:
+            return self._files_loaded
+
+    @files_loaded.setter
+    def files_loaded(self, value: int):
+        with self._lock:
+            self._files_loaded = value
+
+    def cancel(self):
+        self.cancel_event.set()
+
+    def is_cancelled(self) -> bool:
+        return self.cancel_event.is_set()
 
 def set_logging_level(level: str):
     levels = logging._nameToLevel

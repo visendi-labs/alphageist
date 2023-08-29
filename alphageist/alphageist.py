@@ -69,8 +69,9 @@ class Alphageist(util.StateSubscriptionMixin):
             self.state = s.CONFIGURED
 
     @util.allowed_states({s.CONFIGURED})        
-    def start_init_vectorstore(self)->None:
+    def start_init_vectorstore(self)->Optional[util.LoadingContext]:
         self.vectorstore.start_init_vectorstore(self.config)
+        return self.vectorstore.loading_ctx
 
     @util.allowed_states({s.LOADING_VECTORSTORE})
     def finish_init_vectorstore(self)->None:
@@ -99,7 +100,7 @@ class Alphageist(util.StateSubscriptionMixin):
         query_thread.start()
         self.state = s.QUERYING
 
-    @util.allowed_states({s.NEW, s.CONFIGURED, s.STANDBY, s.ERROR})
+    @util.allowed_states({s.NEW, s.CONFIGURED, s.STANDBY, s.ERROR, s.LOADING_VECTORSTORE})
     def reset(self):
         self.exception = None
         self.vectorstore.reset()

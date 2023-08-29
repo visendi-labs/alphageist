@@ -203,7 +203,7 @@ def test_start_search(tmp_env_factory):
     e.wait()
     assert a.state is state.STANDBY
 
-def test_reset(tmp_env_factory):
+def test_reset_standby_state(tmp_env_factory):
     next(tmp_env_factory('valid_tiny.json'))
     a = Alphageist()
     a.load_config()
@@ -213,9 +213,23 @@ def test_reset(tmp_env_factory):
     assert a.exception is None
     assert a.vectorstore.is_created() == False
 
+def test_reset_loading_state(tmp_env_factory):
+    next(tmp_env_factory('valid.json'))
+    a = Alphageist()
+    a.load_config()
+    ctx = a.start_init_vectorstore()
+
+    assert a.state is state.LOADING_VECTORSTORE, "Unable to continue with test: wrong state"
+    import time
+    time.sleep(1.0)
+    a.reset()
+
+    assert a.state is state.NEW
+    assert a.exception is None
+    assert a.vectorstore.is_created() == False
+
 
 @pytest.mark.parametrize("inval_state", {
-    state.LOADING_VECTORSTORE, 
     state.QUERYING})
 def test_reset_incorrect_state(inval_state:state.State):
     a = Alphageist()

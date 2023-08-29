@@ -128,12 +128,6 @@ def test_is_created_no_collection():
     v = VectorStore()
     assert v.is_created() == False
 
-def test_reset_incorrect_sate():
-    v = VectorStore()
-    v.state = state.LOADING
-    with pytest.raises(errors.InvalidStateError):
-        v.reset()
-
 def test_get_embeddings_correct_type():
     e = get_embeddings(test_cfg_with_api_key)
     assert isinstance(e, Embeddings)

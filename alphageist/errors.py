@@ -45,3 +45,5 @@ class InvalidStateError(Exception):
         self.state = incorrect_state
         self.allowed_states = allowed_states
 
+class LoadingCancelled(Exception):
+    pass

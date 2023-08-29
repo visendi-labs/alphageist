@@ -15,7 +15,10 @@ from langchain.callbacks.base import BaseCallbackHandler
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 
 from alphageist.doc_generator import get_docs_from_path
-from alphageist.util import allowed_states
+from alphageist.util import (
+    allowed_states,
+    LoadingContext,
+)
 from alphageist import util
 from alphageist import state
 from alphageist import errors
@@ -31,11 +34,13 @@ class VectorStore(util.StateSubscriptionMixin):
     exception: Exception
     store: Optional[Qdrant]
     emb: Embeddings
+    loading_ctx: Optional[LoadingContext]
     _thread: threading.Thread
 
     def __init__(self):
         super().__init__()
         self._state = state.NEW
+        self.loading_ctx = None
         self.store = None
         self._thread = None
         
@@ -50,6 +55,7 @@ class VectorStore(util.StateSubscriptionMixin):
 
     @allowed_states({state.NEW})
     def start_init_vectorstore(self, config:cfg.Config, emb:Optional[Embeddings]=None):
+        self.loading_ctx = LoadingContext()
         self.emb = get_embeddings(config) if emb is None else emb
         if self.store is not None: 
             del self.store
@@ -70,7 +76,11 @@ class VectorStore(util.StateSubscriptionMixin):
 
     def _create_vectorstore(self, config: cfg.Config) -> None:
         search_dir = config[cfg.SEARCH_DIRS]
-        docs = get_docs_from_path(search_dir)
+        try:
+            docs = get_docs_from_path(search_dir, self.loading_ctx)
+        except errors.LoadingCancelled:
+            logger.info("Loading vectorstore cancelled")
+            return
         if not docs:
             self.exception = errors.NoSupportedFilesInDirectoryError(search_dir)
             self.state = state.ERROR 
@@ -95,8 +105,11 @@ class VectorStore(util.StateSubscriptionMixin):
             logger.info("Vectorstore successfully created")
             self.state = state.LOADED
 
-    @allowed_states({state.LOADED, state.ERROR, state.NEW})
+    @allowed_states({state.LOADED, state.ERROR, state.NEW, state.LOADING})
     def reset(self):
+        if self.loading_ctx is not None:
+            self.loading_ctx.cancel() 
+
         if self.store is not None:
             self.store.client.delete_collection(collection_name=COLLECTION_NAME)
         self.exception = None
