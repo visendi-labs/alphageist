@@ -7,14 +7,16 @@ from platformdirs import user_config_dir
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.qdrant import Qdrant
-import qdrant_client
-
 from langchain import chat_models
 from langchain.vectorstores.base import VectorStore as LangchainVectorstore
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
+from langchain.chains import RetrievalQAWithSourcesChain
+
+from qdrant_client import QdrantClient
 
 from alphageist.doc_generator import get_docs_from_path
+from alphageist.custom_retriever import MultiStoreRetreiver
 from alphageist.util import (
     allowed_states,
     LoadingContext,
@@ -29,6 +31,7 @@ import alphageist.config as cfg
 logger = logging.getLogger(constant.LOGGER_NAME)
 
 COLLECTION_NAME = "alphageist"
+REMOTE_COLLECTION_NAME = "materials"
 
 class VectorStore(util.StateSubscriptionMixin):
     exception: Exception
@@ -60,7 +63,7 @@ class VectorStore(util.StateSubscriptionMixin):
         if self.store is not None: 
             del self.store
             self.store = None
-        client = qdrant_client.QdrantClient(path=config[cfg.VECTORDB_DIR], prefer_grpc=True)  
+        client = QdrantClient(path=config[cfg.VECTORDB_DIR], prefer_grpc=True)  
         self.store = Qdrant(client=client, collection_name=COLLECTION_NAME, embeddings=self.emb)  
 
         self.state = state.LOADING
@@ -138,19 +141,37 @@ class VectorStore(util.StateSubscriptionMixin):
              config: cfg.Config, 
              query_string: str, 
              callbacks: list[BaseCallbackHandler] = [] ) -> dict:
-
-        index = self._get_vectorstore_index_wrapper()
+        
         streaming = bool(callbacks)
-        llm = chat_models.ChatOpenAI(temperature=config[cfg.LLM_TEMPERATURE], # type: ignore
-                             model_name=config[cfg.LLM_MODEL_NAME],
-                             streaming=streaming, 
-                             callbacks=callbacks, 
-                             openai_api_key=config[cfg.API_KEY_OPEN_AI])
+        llm = chat_models.ChatOpenAI(
+            temperature=config[cfg.LLM_TEMPERATURE], # type: ignore
+            model_name=config[cfg.LLM_MODEL_NAME],
+            streaming=streaming, 
+            callbacks=callbacks, 
+            openai_api_key=config[cfg.API_KEY_OPEN_AI]
+        )
+        remote_store = Qdrant(
+            client=QdrantClient(
+                url=constant.QDRANT_CLOUD_URL,
+                api_key=constant.QDRANT_CLOUD_KEY,
+                prefer_grpc=True),
+            collection_name=REMOTE_COLLECTION_NAME,
+            embeddings=self.emb
+        )
+        chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm, 
+            retriever=MultiStoreRetreiver(
+                vectorstores=[
+                    self.store, # type: ignore
+                    remote_store
+                    ],
+                k=4),
+            chain_type="stuff")
+
         logger.info(
             f"Querying using {config[cfg.LLM_MODEL_NAME]} on temp {config[cfg.LLM_TEMPERATURE]} (streaming: {streaming})")
-
         try:
-            res = index.query_with_sources(query_string, llm=llm)
+            res = chain({chain.question_key: query_string}) 
         except Exception as err:
             self.exception = err
             self.state = state.ERROR

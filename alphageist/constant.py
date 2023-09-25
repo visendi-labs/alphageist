@@ -41,3 +41,7 @@ if not FROZEN:
     # for development, get the root metadata directly from local repo
     TRUSTED_ROOT_SRC = INSTALL_DIR / 'temp/repository/metadata/root.json'
 TRUSTED_ROOT_DST = METADATA_DIR / 'root.json'
+
+QDRANT_CLOUD_URL = "https://a229b7d8-9acf-43bf-bab8-7e0bf30cc773.us-east-1-0.aws.cloud.qdrant.io:6333"
+QDRANT_CLOUD_KEY = "PhxKLoZjmVBnh8KT7Bf5q-VvePavi0CjGVfAUxgxiXsIBfDZGWZUmg" # ONLY client side KEYS HERE (READ ONLY)
+
