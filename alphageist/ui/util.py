@@ -6,6 +6,7 @@ import functools
 import platform
 from typing import Iterator
 from alphageist import errors
+import webbrowser
 from PyQt6.QtCore import (
     QMetaObject, 
     Qt, 
@@ -65,16 +66,21 @@ def force_main_thread(*argtypes:type):
     return decorator
 
 def open_file_link(url: QUrl) -> None:
-        filepath = url.path()
-        # For Windows
-        if platform.system() == 'Windows':
-            # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
-            os.startfile(filepath) # type: ignore
-        # For MacOS
-        elif platform.system() == 'Darwin':
-            # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
-            os.system('open "{}"'.format(filepath))
-        # Unsupported platform
-        else:
-            # Replace with correct error handling process
-            print("Platform not supported.")
+    # Check if it's a web link
+    if url.scheme() in ("http", "https"):
+        webbrowser.open(url.toString())
+        return
+
+    filepath = url.path()
+    # For Windows
+    if platform.system() == 'Windows':
+        # Open file, change to: os.startfile(os.path.dirname(filepath)) to instead open folder
+        os.startfile(filepath) # type: ignore
+    # For MacOS
+    elif platform.system() == 'Darwin':
+        # Open file, change to: os.system('open -R "{}"'.format(filepath)) to instead open folder
+        os.system('open "{}"'.format(filepath))
+    # Unsupported platform
+    else:
+        # Replace with correct error handling process
+        print("Platform not supported.")
