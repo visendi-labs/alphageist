@@ -7,7 +7,7 @@ from platformdirs import user_config_dir
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores.qdrant import Qdrant
-from langchain import chat_models
+from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores.base import VectorStore as LangchainVectorstore
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
@@ -143,7 +143,7 @@ class VectorStore(util.StateSubscriptionMixin):
              callbacks: list[BaseCallbackHandler] = [] ) -> dict:
         
         streaming = bool(callbacks)
-        llm = chat_models.ChatOpenAI(
+        llm = ChatOpenAI(
             temperature=config[cfg.LLM_TEMPERATURE], # type: ignore
             model_name=config[cfg.LLM_MODEL_NAME],
             streaming=streaming, 

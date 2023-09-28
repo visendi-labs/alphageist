@@ -10,7 +10,12 @@ import platformdirs
 import shutil
 import pytest
 from pathlib import Path
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import (
+    Mock, 
+    MagicMock, 
+    patch,
+    create_autospec
+)
 from alphageist.alphageist import Alphageist
 from alphageist.vectorstore import VectorStore
 from alphageist import (
@@ -22,28 +27,21 @@ from alphageist import (
 
 from test.test_vectorstore import MockEmbedding
 import test.test_config as test_cfg
-from alphageist import config as cfg
-from unittest.mock import patch
 
 from langchain.chat_models.base import SimpleChatModel
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.schema.messages import BaseMessage
+from langchain.vectorstores import VectorStore as LangchainVectorstore, Qdrant
+
+from qdrant_client import QdrantClient
 
 class MockLMM(SimpleChatModel):
     @property
     def _llm_type(self) -> str: return "MockLLM"
 
-    def _call(
-        self,
-        messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
-        run_manager: Optional[CallbackManagerForLLMRun] = None,
-        **kwargs: Any,
-    ) -> str:
+    def _call(self,*args, **kwargs) -> str:
         return "HELLO MOTHERFUCKER"
 
-    
-    
 @pytest.fixture
 def tmp_user_config_dir(tmp_path):
     """Updates the config path to a tmp_path"""
@@ -186,8 +184,10 @@ def test_start_search_empty_search_string(tmp_env_factory):
     with pytest.raises(ValueError):
         a.start_search("")
 
+@pytest.mark.timeout(5)
 @patch('alphageist.vectorstore.OpenAIEmbeddings', new=MockEmbedding)
-@patch('alphageist.vectorstore.chat_models.ChatOpenAI', new=MockLMM)
+@patch('alphageist.vectorstore.ChatOpenAI', new=MockLMM)
+@patch('alphageist.vectorstore.QdrantClient', new=create_autospec(QdrantClient))
 def test_start_search(tmp_env_factory):
     next(tmp_env_factory('valid_tiny.json'))
     a = Alphageist()

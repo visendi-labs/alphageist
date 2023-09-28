@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Optional 
 
 from PyQt6.QtCore import Qt, QTimer, QPoint, pyqtSignal, QMetaObject, pyqtSlot, QSize
 from PyQt6 import QtCore
@@ -424,12 +425,12 @@ class SettingsDialog(QDialog):
     def closeEvent(self, event):
         self.closed.emit(False)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() == Qt.MouseButton.LeftButton:
+    def mousePressEvent(self, event: Optional[QMouseEvent]) -> None:
+        if event is not None and event.buttons() == Qt.MouseButton.LeftButton:
             self.drag_pos = event.globalPosition().toPoint() - self.frameGeometry().topLeft() # type: ignore
             event.accept()
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
-        if event.buttons() == Qt.MouseButton.LeftButton:
+    def mouseMoveEvent(self, event: Optional[QMouseEvent]) -> None:
+        if event is not None and event.buttons() == Qt.MouseButton.LeftButton:
             self.move(event.globalPosition().toPoint() - self.drag_pos) # type: ignore
             event.accept()
