@@ -52,8 +52,6 @@ from PyQt6.QtGui import (
     QIcon, 
     QCursor
 )
-import openai
-
 from alphageist.query import get_sources_from_answer
 from alphageist.callbackhandler import CustomStreamHandler
 from alphageist import state
@@ -63,6 +61,7 @@ from alphageist.alphageist import Alphageist
 from alphageist.ui import util
 from langchain.vectorstores.base import VectorStore
 from langchain.schema import LLMResult
+import openai
 
 from .constant import ASSETS_DIRECTORY
 from .constant import COLOR
@@ -359,7 +358,8 @@ class SpotlightSearch(QWidget):
     def _handle_error_state(self):
         """This method is called from another thread"""
         exception = self.alphageist.exception
-        if isinstance(exception, openai.error.AuthenticationError):
+        
+        if isinstance(exception, openai.AuthenticationError):
             self.set_search_bar_error_message("Invalid API Key")
         elif isinstance(exception, errors.MissingConfigValueError):
             self.set_search_bar_error_message(f"Open settings... →")
