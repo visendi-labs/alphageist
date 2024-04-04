@@ -1,5 +1,6 @@
 from langchain.docstore.document import Document
-from langchain.vectorstores.base import VectorStoreRetriever, VectorStore, BaseRetriever
+from langchain.vectorstores.base import VectorStoreRetriever, VectorStore 
+from langchain.schema.retriever import BaseRetriever
 from langchain.callbacks.manager import CallbackManagerForRetrieverRun
 
 from langchain.pydantic_v1 import Field, root_validator
