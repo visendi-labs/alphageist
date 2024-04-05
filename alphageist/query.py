@@ -2,7 +2,6 @@ import re
 import sys
 import logging
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
-from langchain.chat_models import ChatOpenAI
 from langchain.callbacks.base import BaseCallbackHandler
 
 from alphageist.vectorstore import VectorStore

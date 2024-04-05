@@ -9,7 +9,9 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from langchain.docstore.document import Document
-from langchain.document_loaders import (
+from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
+from langchain.document_loaders.base import BaseLoader
+from langchain_community.document_loaders import (
     PyPDFLoader,
     PythonLoader,
     Docx2txtLoader,
@@ -17,8 +19,6 @@ from langchain.document_loaders import (
     UnstructuredExcelLoader,
     CSVLoader
 )
-from langchain.text_splitter import RecursiveCharacterTextSplitter, TextSplitter, PythonCodeTextSplitter
-from langchain.document_loaders.base import BaseLoader
 
 from alphageist.custom_loaders import PPTXLoader
 from alphageist.util import (

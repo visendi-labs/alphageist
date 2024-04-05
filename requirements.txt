@@ -16,3 +16,4 @@ pandas>=2.2.1
 docx2txt>=0.8
 pypdf>=4.1.0
 python-magic==0.4.15 # If higher, than can't parse xlsx
+langchain-openai>=0.1.1

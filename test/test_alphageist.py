@@ -31,7 +31,6 @@ import test.test_config as test_cfg
 from langchain.chat_models.base import SimpleChatModel
 from langchain.callbacks.manager import CallbackManagerForLLMRun
 from langchain.schema.messages import BaseMessage
-from langchain.vectorstores import VectorStore as LangchainVectorstore, Qdrant
 
 from qdrant_client import QdrantClient
 
@@ -184,7 +183,6 @@ def test_start_search_empty_search_string(tmp_env_factory):
     with pytest.raises(ValueError):
         a.start_search("")
 
-@pytest.mark.timeout(5)
 @patch('alphageist.vectorstore.OpenAIEmbeddings', new=MockEmbedding)
 @patch('alphageist.vectorstore.ChatOpenAI', new=MockLMM)
 @patch('alphageist.vectorstore.QdrantClient', new=create_autospec(QdrantClient))

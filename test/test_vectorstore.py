@@ -6,7 +6,6 @@ from unittest.mock import MagicMock
 from random import random
 
 from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.qdrant import Qdrant
 
 from alphageist.vectorstore import VectorStore
 from alphageist.vectorstore import get_embeddings

@@ -4,14 +4,14 @@ import logging
 from typing import Optional
 from platformdirs import user_config_dir
 
-from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings.base import Embeddings
-from langchain.vectorstores.qdrant import Qdrant
-from langchain.chat_models import ChatOpenAI
 from langchain.vectorstores.base import VectorStore as LangchainVectorstore
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.chains import RetrievalQAWithSourcesChain
+from langchain_community.vectorstores import Qdrant
+from langchain_openai import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI
 
 from qdrant_client import QdrantClient
 
@@ -171,7 +171,7 @@ class VectorStore(util.StateSubscriptionMixin):
         logger.info(
             f"Querying using {config[cfg.LLM_MODEL_NAME]} on temp {config[cfg.LLM_TEMPERATURE]} (streaming: {streaming})")
         try:
-            res = chain({chain.question_key: query_string}) 
+            res = chain.invoke({chain.question_key: query_string})
         except Exception as err:
             self.exception = err
             self.state = state.ERROR
